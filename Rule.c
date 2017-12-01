@@ -4,7 +4,6 @@
 void Rule_init(Rule *thisRule) {
 	Rule_setMapSizeX(thisRule, 1000);
 	Rule_setMapSizeY(thisRule, 10);
-	thisRule->testRule = 0;
 	thisRule->testRule = 252;
 }
 
