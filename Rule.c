@@ -4,6 +4,11 @@
 void Rule_init(Rule *thisRule) {
 	Rule_setMapSizeX(thisRule, 1000);
 	Rule_setMapSizeY(thisRule, 10);
+<<<<<<< HEAD
+=======
+	thisRule->testRule = 252;
+	thisRule->testRule = 10000;
+>>>>>>> sub02
 }
 
 void Rule_finish(Rule *thisRule) {
