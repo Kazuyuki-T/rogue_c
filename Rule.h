@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 typedef struct {
-	int testPlayer;
+	int testRule;
 
 	// private
 	int mapsizex;
