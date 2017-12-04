@@ -4,6 +4,10 @@
 
 #include <stdio.h>
 
+#define MAPSIZEX 10
+#define MAPSIZEY 10
+#define ENEMYNUMBER 2
+
 typedef struct {
 	int testRule;
 
@@ -11,7 +15,13 @@ typedef struct {
 	int mapsizex;
 	// private
 	int mapsizey;
+
+
 } Rule;
+
+
+
+int aaa = 0;
 
 // public
 void Rule_init(Rule *thisRule);

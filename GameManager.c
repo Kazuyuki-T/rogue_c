@@ -27,7 +27,7 @@ void GameManager_run(GameManager *thisGM) {
 		// gm---state-->player
 		// gm<---act----player
 
-		// state update
+		// rule <- state update
 		
 	}
 }

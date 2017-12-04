@@ -2,8 +2,8 @@
 #include "Rule.h"
 
 void Rule_init(Rule *thisRule) {
-	Rule_setMapSizeX(thisRule, 1000);
-	Rule_setMapSizeY(thisRule, 10);
+	//Rule_setMapSizeX(thisRule, 1000);
+	//Rule_setMapSizeY(thisRule, 10);
 }
 
 void Rule_finish(Rule *thisRule) {
