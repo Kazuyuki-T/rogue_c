@@ -8,3 +8,11 @@ void State_init(State *thisState) {
 void State_finish(State *thisState) {
 
 }
+
+void State_update(State *thisState) {
+	// player action
+
+	// enemy action
+
+	//
+}

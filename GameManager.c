@@ -21,6 +21,15 @@ void GameManager_finish(GameManager *thisGM) {
 
 void GameManager_run(GameManager *thisGM) {
 	printf("X:%d, Y:%d\n", Rule_getMapSizeX(&(thisGM->rule)), Rule_getMapSizeY(&(thisGM->rule)));
+
+	// main loop
+	while (TRUE) {
+		// gm---state-->player
+		// gm<---act----player
+
+		// state update
+		
+	}
 }
 
 void GameManager_setStage(GameManager *thisGM, State *s) {

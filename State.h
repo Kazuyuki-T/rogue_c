@@ -14,5 +14,8 @@ void State_init(State *thisState);
 // public
 void State_finish(State *thisState);
 
+// public
+void State_update(State *thisState);
+
 
 #endif
