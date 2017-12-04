@@ -8,5 +8,7 @@ int main(void)
 
 	GameManager_run(&gm);
 
+	// test
+
 	return 0;
 }
