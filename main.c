@@ -10,5 +10,7 @@ int main(void)
 
 	// test
 
+	GameManager_finish(&gm);
+
 	return 0;
 }
