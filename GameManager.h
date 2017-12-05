@@ -6,9 +6,16 @@
 #define FALSE 0
 
 #include <stdio.h>
-#include "State.h"
+//#include "State.h"
 #include "Player.h"
-#include "Rule.h"
+//#include "Rule.h"
+
+struct Rule_t;
+typedef struct Rule_t Rule;
+struct State_t;
+typedef struct State_t State;
+struct Player_t;
+typedef struct Player_t Player;
 
 typedef struct {
 	// private
@@ -28,13 +35,13 @@ void GameManager_finish(GameManager *thisGM);
 // public
 void GameManager_run(GameManager *thisGM);
 
-// public
+// private
 void GameManager_setStage(GameManager *thisGM, State *s);
 
-// public
+// private
 void GameManager_setPlayer(GameManager *thisGM, Player *p);
 
-// public
+// private
 void GameManager_setRule(GameManager *thisGM, Rule *r);
 
 

@@ -1,5 +1,8 @@
 ﻿#include <stdio.h>
 #include "GameManager.h"
+#include "State.h"
+#include "Player.h"
+#include "Rule.h"
 
 void GameManager_init(GameManager *thisGM) {
 	printf("rule init...");
@@ -10,7 +13,7 @@ void GameManager_init(GameManager *thisGM) {
 
 	printf("state init...");
 	State newState;
-	State_init(&newState);
+	State_init(&newState, &(thisGM->rule));
 	GameManager_setStage(thisGM, &newState);
 	printf("complete\n");
 	//State_output(&newState);
@@ -37,11 +40,13 @@ void GameManager_run(GameManager *thisGM) {
 	
 	// main loop
 	while (TRUE) {
+		// output current state
+		
 		//int act = Player_getAction(&(thisGM->player), &(thisGM->state));
 		//Rule_transition(&(thisGM->rule), &(thisGM->state), act);
 
 		//int act = Player_getAction(&(thisGM->state));
-		//nextState = Rule_transition(&(thisGM->state), act);
+		//State nextState = Rule_transition(&(thisGM->state), act);
 		//State_update(nextState);
 
 		break;

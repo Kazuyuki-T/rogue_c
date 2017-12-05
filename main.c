@@ -6,9 +6,8 @@ int main(void)
 	GameManager gm;
 	GameManager_init(&gm);
 
+	// 実行
 	GameManager_run(&gm);
-
-	// test
 
 	GameManager_finish(&gm);
 

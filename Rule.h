@@ -3,26 +3,42 @@
 
 
 #include <stdio.h>
-#include "State.h"
+//#include "State.h"
 
-typedef struct {
+struct State_t;
+typedef struct State_t State;
+
+//typedef struct {
+//	int testRule;
+//
+//	// private
+//	int mapSizeX;
+//	// private
+//	int mapSizeY;
+//	// private
+//	int enemyNumber;
+//} Rule;
+
+struct Rule_t {
 	int testRule;
 
 	// private
-	int mapsizex;
+	int mapSizeX;
 	// private
-	int mapsizey;
+	int mapSizeY;
 	// private
 	int enemyNumber;
-
-
-} Rule;
+};
+typedef struct Rule_t Rule;
 
 // public
 void Rule_init(Rule *thisRule);
 
 // public
 void Rule_finish(Rule *thisRule);
+
+// public
+void Rule_transition(Rule *thisRule, State *currentState, int act);
 
 // private
 void Rule_setMapSizeX(Rule *thisRule, int xsize);
@@ -36,8 +52,11 @@ void Rule_setMapSizeY(Rule *thisRule, int ysize);
 // public
 int Rule_getMapSizeY(Rule *thisRule);
 
+// private
+void Rule_setEnemyNumber(Rule *thisRule, int enemyNum);
+
 // public
-void Rule_transition(Rule *thisRule, State *currentState, int act);
+int Rule_getEnemyNumber(Rule *thisRule);
 
 
 #endif

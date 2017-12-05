@@ -1,5 +1,6 @@
 ﻿#include <stdio.h>
 #include "Player.h"
+#include "State.h"
 
 void Player_init(Player *thisPlayer) {
 

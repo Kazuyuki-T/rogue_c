@@ -3,11 +3,19 @@
 
 
 #include <stdio.h>
-#include "State.h"
+//#include "State.h"
 
-typedef struct {
+struct State_t;
+typedef struct State_t State;
+
+//typedef struct {
+//	int testPlayer;
+//} Player;
+
+struct Player_t {
 	int testPlayer;
-} Player;
+};
+typedef struct Player_t Player;
 
 // public
 void Player_init(Player *thisPlayer);
