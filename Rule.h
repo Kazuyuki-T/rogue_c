@@ -3,10 +3,7 @@
 
 
 #include <stdio.h>
-
-#define MAPSIZEX 10
-#define MAPSIZEY 10
-#define ENEMYNUMBER 2
+#include "State.h"
 
 typedef struct {
 	int testRule;
@@ -15,13 +12,11 @@ typedef struct {
 	int mapsizex;
 	// private
 	int mapsizey;
+	// private
+	int enemyNumber;
 
 
 } Rule;
-
-
-
-int aaa = 0;
 
 // public
 void Rule_init(Rule *thisRule);
@@ -40,6 +35,9 @@ void Rule_setMapSizeY(Rule *thisRule, int ysize);
 
 // public
 int Rule_getMapSizeY(Rule *thisRule);
+
+// public
+void Rule_transition(Rule *thisRule, State *currentState, int act);
 
 
 #endif

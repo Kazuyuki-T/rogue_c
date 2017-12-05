@@ -3,6 +3,7 @@
 
 
 #include <stdio.h>
+#include "State.h"
 
 typedef struct {
 	int testPlayer;
@@ -15,10 +16,7 @@ void Player_init(Player *thisPlayer);
 void Player_finish(Player *thisPlayer);
 
 // public
-void Player_setState(Player *thisPlayer);
-
-// public
-int Player_getAction(Player *thisPlayer);
+int Player_getAction(Player *thisPlayer, State *currentState);
 
 
 #endif

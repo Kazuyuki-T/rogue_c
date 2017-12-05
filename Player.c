@@ -9,10 +9,6 @@ void Player_finish(Player *thisPlayer) {
 
 }
 
-void Player_setState(Player *thisPlayer) {
-
-}
-
-int Player_getAction(Player *thisPlayer) {
+int Player_getAction(Player *thisPlayer, State *currentState) {
 	return 0;
 }
