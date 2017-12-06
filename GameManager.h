@@ -2,9 +2,6 @@
 #define GAMEMANAGER_H
 
 
-#define TRUE 1
-#define FALSE 0
-
 #include <stdio.h>
 #include "Rule.h"
 #include "State.h"

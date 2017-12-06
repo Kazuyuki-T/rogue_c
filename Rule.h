@@ -22,14 +22,23 @@ void Rule_init(Rule *thisRule);
 // public
 void Rule_finish(Rule *thisRule);
 
-// 
-void Rule_initState(Rule *thisRule, State *s);
+// public
+void Rule_initArrayState(Rule *thisRule, State *s);
 
-//
-void Rule_finishState(Rule *thisRule, State *s);
+// public
+void Rule_finishArrayState(Rule *thisRule, State *s);
+
+// public，Stateの情報のセット，map，obj配置
+void Rule_setStateInfo(Rule *thisRule, State *s);
 
 // public
 void Rule_transition(Rule *thisRule, State *currentState, int act);
+
+//
+int Rule_actionPlayer(Rule *thisRule, State *currentState, int act);
+
+//
+int Rule_convertActtoDir(int act);
 
 // private，マップ配列の動的確保
 void Rule_makeMapArray(int ***mapArray, int lengthX, int lengthY, int initVal);

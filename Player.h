@@ -3,6 +3,7 @@
 
 
 #include <stdio.h>
+#include <conio.h>
 #include "State.h"
 
 typedef struct {
