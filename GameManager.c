@@ -1,8 +1,5 @@
 ﻿#include <stdio.h>
 #include "GameManager.h"
-#include "State.h"
-#include "Player.h"
-#include "Rule.h"
 
 void GameManager_init(GameManager *thisGM) {
 	printf("rule init...");
@@ -16,7 +13,11 @@ void GameManager_init(GameManager *thisGM) {
 	State_init(&newState, &(thisGM->rule));
 	GameManager_setStage(thisGM, &newState);
 	printf("complete\n");
-	//State_output(&newState);
+
+	// State内の配列の動的確保
+	// Rule内の変数値に基づく，マップサイズ，敵数，...
+	Rule_initState(&(thisGM->rule), &(thisGM->state));
+	//State_output(&(thisGM->state));
 	
 	printf("player init...");
 	Player newPlayer;
@@ -24,18 +25,30 @@ void GameManager_init(GameManager *thisGM) {
 	GameManager_setPlayer(thisGM, &newPlayer);
 	printf("complete\n");
 
-	printf("all init complete\n");
+	printf("init complete\n");
 }
 
 void GameManager_finish(GameManager *thisGM) {
+	printf("player finish...");
+	Player_finish(&(thisGM->player));
+	printf("complete\n");
+
+	// State内の動的確保した配列の解放
+	Rule_finishState(&(thisGM->rule), &(thisGM->state));
+
 	printf("state finish...");
 	State_finish(&(thisGM->state));
 	printf("complete\n");
 
-	printf("all finish complete\n");
+	printf("rule finish...");
+	Rule_finish(&(thisGM->rule));
+	printf("complete\n");
+
+	printf("finish complete\n");
 }
 
 void GameManager_run(GameManager *thisGM) {
+	printf("Game start\n");
 	printf("X:%d, Y:%d\n", Rule_getMapSizeX(&(thisGM->rule)), Rule_getMapSizeY(&(thisGM->rule)));
 	
 	// main loop
@@ -51,6 +64,7 @@ void GameManager_run(GameManager *thisGM) {
 
 		break;
 	}
+	printf("Game end\n");
 }
 
 void GameManager_setStage(GameManager *thisGM, State *s) {
