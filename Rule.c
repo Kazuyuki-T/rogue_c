@@ -5,12 +5,15 @@
 #define TRUE 1
 #define FALSE 0
 
+int MAPSIZEX = 10;
+int MAPSIZEY = 10;
+
 const int diffX[9] = { -1, 0, 1,-1, 0, 1,-1, 0, 1 };
-const int diffY[9] = { 1, 1, 1, 0, 0, 0,-1,-1,-1 };
+const int diffY[9] = {  1, 1, 1, 0, 0, 0,-1,-1,-1 };
 
 void Rule_init(Rule *thisRule) {
-	Rule_setMapSizeX(thisRule, 10);
-	Rule_setMapSizeY(thisRule, 5);
+	Rule_setMapSizeX(thisRule, 20);
+	Rule_setMapSizeY(thisRule, 20);
 	Rule_setEnemyNumber(thisRule, 4);
 }
 

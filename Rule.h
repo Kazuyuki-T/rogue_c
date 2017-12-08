@@ -5,6 +5,10 @@
 #include <stdio.h>
 #include "State.h"
 
+extern int MAPSIZEX;
+extern int MAPSIZEY;
+
+
 typedef struct {
 	int testRule;
 
@@ -37,7 +41,7 @@ void Rule_transition(Rule *thisRule, State *currentState, int act);
 //
 int Rule_actionPlayer(Rule *thisRule, State *currentState, int act);
 
-//
+// private, act1~9 -> dir0~8
 int Rule_convertActtoDir(int act);
 
 // private，マップ配列の動的確保

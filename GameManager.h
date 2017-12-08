@@ -26,6 +26,9 @@ void GameManager_finish(GameManager *thisGM);
 void GameManager_run(GameManager *thisGM);
 
 // private
+void GameManager_output(GameManager *thisGM);
+
+// private
 void GameManager_setStage(GameManager *thisGM, State *s);
 
 // private

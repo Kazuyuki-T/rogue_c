@@ -58,30 +58,56 @@ void GameManager_run(GameManager *thisGM) {
 
 
 	//printf("X:%d, Y:%d\n", Rule_getMapSizeX(&(thisGM->rule)), Rule_getMapSizeY(&(thisGM->rule)));
-	printf("player:(%d, %d)\n", thisGM->state.x, thisGM->state.y);
+	//printf("player:(%d, %d)\n", thisGM->state.x, thisGM->state.y);
+
+	printf("\n"); // １行目の空欄分
+	GameManager_output(thisGM);
 
 	///////////////
 	// main loop //
 	///////////////
 	while (TRUE) {
-		// output current state
-		
+		printf("\r"); // カーソルを先頭へ
+		printf("\x1b[1;1H"); // カーソルの位置を絶対座標1,1へ
+
+		// プレイヤの行動決定
 		int act = Player_getAction(&(thisGM->player), &(thisGM->state));
 		Rule_transition(&(thisGM->rule), &(thisGM->state), act);
-
+		
 		printf("player:(%d, %d)\n", thisGM->state.x, thisGM->state.y);
+		GameManager_output(thisGM); // 盤面の出力
 
 		//int act = Player_getAction(&(thisGM->player), &(thisGM->state));
 		//State *nextState = Rule_transition(&(thisGM->state), act);
 		//State_update(&(thisGM->state), nextState);
 
+		// ゲーム１試行の終了条件
 		if(act == 9)	break;
 	}
-
 
 	#ifdef DEBUG
 	printf("Game end\n");
 	#endif // DEBUG
+}
+
+void GameManager_output(GameManager *thisGM) {
+	int mapx = Rule_getMapSizeX(&(thisGM->rule));
+	int mapy = Rule_getMapSizeY(&(thisGM->rule));
+
+	for (int y = 0; y < mapy; y++) {
+		for (int x = 0; x < mapx; x++) {
+			if (thisGM->state.map[y][x] == 1) {
+				printf("# ");
+			}
+			else if (thisGM->state.map[y][x] == 0 && thisGM->state.y == y && thisGM->state.x == x) {
+				printf("@ ");
+			}
+			else {
+				printf(". ");
+			}
+		}
+		printf("\n");
+	}
 }
 
 void GameManager_setStage(GameManager *thisGM, State *s) {

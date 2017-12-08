@@ -6,7 +6,7 @@
 #define FALSE 0
 
 void Player_init(Player *thisPlayer) {
-
+	thisPlayer->testPlayer = MAPSIZEX;
 }
 
 void Player_finish(Player *thisPlayer) {
@@ -57,6 +57,6 @@ int Player_getAction(Player *thisPlayer, State *currentState) {
 		}
 	}
 	
-	printf("%c                \n", (char)act);
+	//printf("%c                \n", (char)act);
 	return act;
 }
