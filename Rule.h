@@ -33,7 +33,7 @@ void Rule_setStateInfo(Rule *thisRule, State *s);
 int Rule_setState_setMap(Rule *thisRule, State *s);
 
 //
-void Rule_setState_setStair(Rule *thisRule, State *s);
+void Rule_setState_setStair(Rule *thisRule, State *s, int gridnum);
 
 //
 void Rule_setState_setItem(Rule *thisRule, State *s);
@@ -73,6 +73,9 @@ void Rule_setEnemyNumber(Rule *thisRule, int enemyNum);
 
 // public
 int Rule_getEnemyNumber(Rule *thisRule);
+
+// private, min<=randval<=max
+int Rule_getRandom(int min, int max);
 
 
 #endif

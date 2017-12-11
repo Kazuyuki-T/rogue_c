@@ -1,6 +1,4 @@
 ﻿#include <stdio.h>
-#include <time.h>
-#include <stdlib.h>
 #include "GameManager.h"
 
 //#define DEBUG
@@ -17,6 +15,7 @@ void GameManager_init(GameManager *thisGM) {
 	
 	State newState;
 	State_init(&newState);
+	// 配列の動的確保
 	State_initArray(&newState, thisGM->rule.mapSizeX, thisGM->rule.mapSizeY, thisGM->rule.enemyNumber);
 	GameManager_setStage(thisGM, &newState);
 
@@ -55,9 +54,6 @@ void GameManager_run(GameManager *thisGM) {
 	printf("Game start\n");
 	#endif // DEBUG
 
-	//printf("X:%d, Y:%d\n", Rule_getMapSizeX(&(thisGM->rule)), Rule_getMapSizeY(&(thisGM->rule)));
-	//printf("player:(%d, %d)\n", thisGM->state.x, thisGM->state.y);
-
 	printf("\n"); // １行目の空欄分
 	GameManager_output(thisGM);
 
@@ -65,7 +61,7 @@ void GameManager_run(GameManager *thisGM) {
 	// main loop //
 	///////////////
 	while (TRUE) {
-		printf("\r"); // カーソルを先頭へ
+		//printf("\r"); // カーソルを先頭へ
 		printf("\x1b[1;1H"); // カーソルの位置を絶対座標1,1へ
 
 		// プレイヤの行動決定
@@ -74,8 +70,10 @@ void GameManager_run(GameManager *thisGM) {
 		//State *nextState = Rule_transition(&(thisGM->state), act);
 		//State_update(&(thisGM->state), nextState);
 
-		printf("player:(%d, %d)             \n", thisGM->state.x, thisGM->state.y);
-		GameManager_output(thisGM); // 盤面の出力
+		printf("                                                 \n");
+		GameManager_outputMap(thisGM); // 盤面の出力
+		GameManager_outputPlayerState(thisGM); // aaa
+
 
 		// ゲーム１試行の終了条件
 		if (act == 0x1B) {
@@ -89,24 +87,36 @@ void GameManager_run(GameManager *thisGM) {
 	#endif // DEBUG
 }
 
-void GameManager_output(GameManager *thisGM) {
+void GameManager_outputMap(GameManager *thisGM) {
 	int mapx = Rule_getMapSizeX(&(thisGM->rule));
 	int mapy = Rule_getMapSizeY(&(thisGM->rule));
 
 	for (int y = 0; y < mapy; y++) {
 		for (int x = 0; x < mapx; x++) {
-			if (thisGM->state.map[y][x] == 1) {
-				printf("# ");
-			}
-			else if (thisGM->state.map[y][x] == 0 && thisGM->state.y == y && thisGM->state.x == x) {
+			// 描画の優先度に注意
+			if (thisGM->state.y == y && thisGM->state.x == x) {
 				printf("@ ");
 			}
-			else {
+			else if (thisGM->state.map[y][x] == 2) {
+				printf("%% ");
+			}
+			else if (thisGM->state.map[y][x] == 0) {
 				printf(". ");
+			}
+			else if (thisGM->state.map[y][x] == 1) {
+				printf("# ");
+			}
+			else {
+				printf("_ ");
 			}
 		}
 		printf("\n");
 	}
+	printf("\n");
+}
+
+void GameManager_outputPlayerState(GameManager *thisGM) {
+	printf("player:(%d, %d)    \n", thisGM->state.x, thisGM->state.y);
 }
 
 void GameManager_setStage(GameManager *thisGM, State *s) {

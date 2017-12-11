@@ -26,7 +26,10 @@ void GameManager_finish(GameManager *thisGM);
 void GameManager_run(GameManager *thisGM);
 
 // private
-void GameManager_output(GameManager *thisGM);
+void GameManager_outputMap(GameManager *thisGM);
+
+// private
+void GameManager_outputPlayerState(GameManager *thisGM);
 
 // private
 void GameManager_setStage(GameManager *thisGM, State *s);
