@@ -1,44 +1,43 @@
 ﻿#include <stdio.h>
-#include <stdlib.h>
 #include "Rule.h"
 
 #define TRUE 1
 #define FALSE 0
 
-int MAPSIZEX = 10;
-int MAPSIZEY = 10;
-
 const int diffX[9] = { -1, 0, 1,-1, 0, 1,-1, 0, 1 };
 const int diffY[9] = {  1, 1, 1, 0, 0, 0,-1,-1,-1 };
 
 void Rule_init(Rule *thisRule) {
-	Rule_setMapSizeX(thisRule, 20);
-	Rule_setMapSizeY(thisRule, 20);
-	Rule_setEnemyNumber(thisRule, 4);
+	//Rule_setMapSizeX(thisRule, 20);
+	//Rule_setMapSizeY(thisRule, 20);
+	//Rule_setEnemyNumber(thisRule, 4);
+
+	thisRule->mapSizeX = 20;
+	thisRule->mapSizeY = 20;
+	thisRule->enemyNumber = 4;
 }
 
 void Rule_finish(Rule *thisRule) {
 
 }
 
-void Rule_initArrayState(Rule *thisRule, State *s) {
-	// 配列の動的確保
-	Rule_makeMapArray(&(s->map), thisRule->mapSizeX, thisRule->mapSizeY, 0);
-	Rule_makeMapArray(&(s->seem), thisRule->mapSizeX, thisRule->mapSizeY, 0);
-	Rule_makeEnemyArray(&(s->enemies), thisRule->enemyNumber, 0);
-	Rule_makeEnemyArray(&(s->killedEnemyTurn), thisRule->enemyNumber, 0);
-}
-
-void Rule_finishArrayState(Rule *thisRule, State *s) {
-	// 動的確保した配列の解放
-	Rule_removeMapArray(&(s->map), thisRule->mapSizeY);
-	Rule_removeMapArray(&(s->seem), thisRule->mapSizeY);
-	Rule_removeEnemyArray(&(s->enemies));
-	Rule_removeEnemyArray(&(s->killedEnemyTurn));
-}
-
 void Rule_setStateInfo(Rule *thisRule, State *s) {
+	int roomGridNum;
+	
 	// マップの作製
+	roomGridNum = Rule_setState_setMap(thisRule, s);
+	// 階段
+	Rule_setState_setStair(thisRule, s);
+	// アイテム
+	Rule_setState_setItem(thisRule, s);
+	// 敵
+	Rule_setState_setEnemy(thisRule, s);
+	// プレイヤ
+	Rule_setState_setPlayer(thisRule, s);
+}
+
+int Rule_setState_setMap(Rule *thisRule, State *s) {
+	int count = 0;
 	for (int y = 0; y < thisRule->mapSizeY; y++) {
 		for (int x = 0; x < thisRule->mapSizeX; x++) {
 			if (y == 0 || x == 0 || y == thisRule->mapSizeY - 1 || x == thisRule->mapSizeX - 1) {
@@ -46,19 +45,29 @@ void Rule_setStateInfo(Rule *thisRule, State *s) {
 			}
 			else {
 				s->map[y][x] = 0;
+				count++;
 			}
-
 			s->seem[y][x] = 1;
 		}
 	}
 
-	// 階段
+	return count;
+}
 
-	// アイテム
+void Rule_setState_setStair(Rule *thisRule, State *s) {
+	// 床の上に生成
 
-	// 敵
+}
 
-	// プレイヤ
+void Rule_setState_setItem(Rule *thisRule, State *s) {
+
+}
+
+void Rule_setState_setEnemy(Rule *thisRule, State *s) {
+
+}
+
+void Rule_setState_setPlayer(Rule *thisRule, State *s) {
 	s->x = 1;
 	s->y = 1;
 }
@@ -70,11 +79,16 @@ void Rule_transition(Rule *thisRule, State *currentState, int act) {
 	int playerActionFlag = Rule_actionPlayer(thisRule, currentState, act);
 	if (playerActionFlag == TRUE) {
 		// enemy
+		Rule_actionEnemy(thisRule, currentState);
 	}
 }
 
 int Rule_actionPlayer(Rule *thisRule, State *currentState, int act) {
-	//
+	// a:Arrow or a:Staff -> 数字入力
+	// 1~9 or f:Food or p:Potion -> 直接行動
+
+
+	// act1~9 -> dir0~8
 	int dir = Rule_convertActtoDir(act);
 
 	int nx = currentState->x + diffX[dir];
@@ -94,6 +108,10 @@ int Rule_actionPlayer(Rule *thisRule, State *currentState, int act) {
 	currentState->x += diffX[dir];
 	currentState->y += diffY[dir];
 	return TRUE;
+}
+
+void Rule_actionEnemy(Rule *thisRule, State *currentState) {
+
 }
 
 int Rule_convertActtoDir(int act) {
@@ -127,45 +145,6 @@ int Rule_convertActtoDir(int act) {
 	else {
 		return 4;
 	}
-}
-
-
-void Rule_makeMapArray(int ***mapArray, int lengthX, int lengthY, int initVal) {
-	*mapArray = (int**)malloc(sizeof(int) * lengthY);
-	if (*mapArray == NULL) exit(1);
-
-	for (int y = 0; y < lengthY; y++) {
-		(*mapArray)[y] = (int*)malloc(sizeof(int) * lengthX);
-		if ((*mapArray)[y] == NULL) exit(1);
-	}
-
-	// initValによる初期化
-	for (int y = 0; y < lengthY; y++) {
-		for (int x = 0; x < lengthX; x++) {
-			(*mapArray)[y][x] = initVal;
-		}
-	}
-}
-
-void Rule_removeMapArray(int ***mapArray, int lengthY) {
-	for (int y = 0; y < lengthY; y++) {
-		free((*mapArray)[y]);
-	}
-	free(*mapArray);
-}
-
-void Rule_makeEnemyArray(int **enemyArray, int enemyLength, int initVal) {
-	*enemyArray = (int*)malloc(sizeof(int) * enemyLength);
-	if (*enemyArray == NULL) exit(1);
-
-	// initValによる初期化
-	for (int e = 0; e < enemyLength; e++) {
-		(*enemyArray)[e] = initVal;
-	}
-}
-
-void Rule_removeEnemyArray(int **enemyArray) {
-	free(*enemyArray);
 }
 
 void Rule_setMapSizeX(Rule *thisRule, int xsize) {

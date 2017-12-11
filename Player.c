@@ -6,7 +6,7 @@
 #define FALSE 0
 
 void Player_init(Player *thisPlayer) {
-	thisPlayer->testPlayer = MAPSIZEX;
+	thisPlayer->testPlayer = 0;
 }
 
 void Player_finish(Player *thisPlayer) {
@@ -50,13 +50,13 @@ int Player_getAction(Player *thisPlayer, State *currentState) {
 			break;
 		}
 		else if (act == 0x1B) {
-			exit(1);
+			break;
+			//exit(1);
 		}
 		else {
 			printf("入力できません   ");
 		}
 	}
 	
-	//printf("%c                \n", (char)act);
 	return act;
 }

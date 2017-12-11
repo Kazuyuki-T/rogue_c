@@ -1,4 +1,6 @@
 ﻿#include <stdio.h>
+#include <time.h>
+#include <stdlib.h>
 #include "GameManager.h"
 
 //#define DEBUG
@@ -7,25 +9,24 @@
 #define FALSE 0
 
 void GameManager_init(GameManager *thisGM) {
+	//srand((unsigned)time(NULL));
+
 	Rule newRule;
 	Rule_init(&newRule);
 	GameManager_setRule(thisGM, &newRule);
 	
 	State newState;
 	State_init(&newState);
+	State_initArray(&newState, thisGM->rule.mapSizeX, thisGM->rule.mapSizeY, thisGM->rule.enemyNumber);
 	GameManager_setStage(thisGM, &newState);
 
 
-	// State内の配列の動的確保
-	// Rule内の変数値に基づく，マップサイズ，敵数，...
-	Rule_initArrayState(&(thisGM->rule), &(thisGM->state));
 	// Ruleに基づきマップ等の配置
 	Rule_setStateInfo(&(thisGM->rule), &(thisGM->state));
 
 
+	//State_output(&(thisGM->state), Rule_getMapSizeX(&(thisGM->rule)), Rule_getMapSizeX(&(thisGM->rule)), Rule_getEnemyNumber(&(thisGM->rule)));
 
-	//State_output(&(thisGM->state));
-	
 
 	Player newPlayer;
 	Player_init(&newPlayer);
@@ -39,9 +40,7 @@ void GameManager_init(GameManager *thisGM) {
 void GameManager_finish(GameManager *thisGM) {
 	Player_finish(&(thisGM->player));
 
-	// State内の動的確保した配列の解放
-	Rule_finishArrayState(&(thisGM->rule), &(thisGM->state));
-
+	// 動的確保した配列の解放含む
 	State_finish(&(thisGM->state));
 
 	Rule_finish(&(thisGM->rule));
@@ -55,7 +54,6 @@ void GameManager_run(GameManager *thisGM) {
 	#ifdef DEBUG
 	printf("Game start\n");
 	#endif // DEBUG
-
 
 	//printf("X:%d, Y:%d\n", Rule_getMapSizeX(&(thisGM->rule)), Rule_getMapSizeY(&(thisGM->rule)));
 	//printf("player:(%d, %d)\n", thisGM->state.x, thisGM->state.y);
@@ -73,16 +71,17 @@ void GameManager_run(GameManager *thisGM) {
 		// プレイヤの行動決定
 		int act = Player_getAction(&(thisGM->player), &(thisGM->state));
 		Rule_transition(&(thisGM->rule), &(thisGM->state), act);
-		
-		printf("player:(%d, %d)\n", thisGM->state.x, thisGM->state.y);
-		GameManager_output(thisGM); // 盤面の出力
-
-		//int act = Player_getAction(&(thisGM->player), &(thisGM->state));
 		//State *nextState = Rule_transition(&(thisGM->state), act);
 		//State_update(&(thisGM->state), nextState);
 
+		printf("player:(%d, %d)             \n", thisGM->state.x, thisGM->state.y);
+		GameManager_output(thisGM); // 盤面の出力
+
 		// ゲーム１試行の終了条件
-		if(act == 9)	break;
+		if (act == 0x1B) {
+			printf("Esc\n");
+			break;
+		}
 	}
 
 	#ifdef DEBUG

@@ -5,8 +5,8 @@
 #include <stdio.h>
 #include "State.h"
 
-extern int MAPSIZEX;
-extern int MAPSIZEY;
+#define MAPSIZEX 10
+#define MAPSIZEY 10
 
 
 typedef struct {
@@ -26,35 +26,35 @@ void Rule_init(Rule *thisRule);
 // public
 void Rule_finish(Rule *thisRule);
 
-// public
-void Rule_initArrayState(Rule *thisRule, State *s);
-
-// public
-void Rule_finishArrayState(Rule *thisRule, State *s);
-
 // public，Stateの情報のセット，map，obj配置
 void Rule_setStateInfo(Rule *thisRule, State *s);
+
+// 
+int Rule_setState_setMap(Rule *thisRule, State *s);
+
+//
+void Rule_setState_setStair(Rule *thisRule, State *s);
+
+//
+void Rule_setState_setItem(Rule *thisRule, State *s);
+
+//
+void Rule_setState_setEnemy(Rule *thisRule, State *s);
+
+//
+void Rule_setState_setPlayer(Rule *thisRule, State *s);
 
 // public
 void Rule_transition(Rule *thisRule, State *currentState, int act);
 
-//
+// private
 int Rule_actionPlayer(Rule *thisRule, State *currentState, int act);
+
+// private
+void Rule_actionEnemy(Rule *thisRule, State *currentState);
 
 // private, act1~9 -> dir0~8
 int Rule_convertActtoDir(int act);
-
-// private，マップ配列の動的確保
-void Rule_makeMapArray(int ***mapArray, int lengthX, int lengthY, int initVal);
-
-// private，動的確保したマップ配列の解放
-void Rule_removeMapArray(int ***mapArray, int lengthY);
-
-// private，敵配列の動的確保
-void Rule_makeEnemyArray(int **enemyArray, int enemyLength, int initVal);
-
-// private，動的確保した敵配列の解放
-void Rule_removeEnemyArray(int **enemyArray);
 
 // private
 void Rule_setMapSizeX(Rule *thisRule, int xsize);
