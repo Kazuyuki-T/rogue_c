@@ -3,7 +3,7 @@
 #include "State.h"
 
 void State_init(State *thisState) {
-	
+	thisState->flr = 0;
 }
 
 void State_initArray(State *thisState, int mx, int my, int en) {
@@ -68,36 +68,4 @@ void State_makeEnemyArray(int **enemyArray, int enemyLength, int initVal) {
 
 void State_removeEnemyArray(int **enemyArray) {
 	free(*enemyArray);
-}
-
-void State_output(State *thisState, int mx, int my, int en) {
-	printf("map\n");
-	for (int y = 0; y < my; y++) {
-		for (int x = 0; x < mx; x++) {
-			printf("%d ", thisState->map[y][x]);
-		}
-		printf("\n");
-	}
-	printf("\n");
-
-	printf("seem\n");
-	for (int y = 0; y < my; y++) {
-		for (int x = 0; x < mx; x++) {
-			printf("%d ", thisState->seem[y][x]);
-		}
-		printf("\n");
-	}
-	printf("\n");
-	
-	printf("enemies\n");
-	for (int e = 0; e < en; e++) {
-		printf("%d ", thisState->enemies[e]);
-	}
-	printf("\n");
-	
-	printf("killed\n");
-	for (int e = 0; e < en; e++) {
-		printf("%d ", thisState->killedEnemyTurn[e]);
-	}
-	printf("\n");
 }

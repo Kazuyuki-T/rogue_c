@@ -25,25 +25,25 @@ int Player_getAction(Player *thisPlayer, State *currentState) {
 		if (act == '1') {
 			break;
 		}
-		else if (act == '2' || act == 0x28) {
+		else if (act == '2') {
 			break;
 		}
 		else if (act == '3') {
 			break;
 		}
-		else if (act == '4' || act == 0x25) {
+		else if (act == '4') {
 			break;
 		}
 		else if (act == '5') {
 			break;
 		}
-		else if (act == '6' || act == 0x27) {
+		else if (act == '6') {
 			break;
 		}
 		else if (act == '7') {
 			break;
 		}
-		else if (act == '8' || act == 0x26) {
+		else if (act == '8') {
 			break;
 		}
 		else if (act == '9') {
@@ -67,6 +67,14 @@ int Player_getAction(Player *thisPlayer, State *currentState) {
 		}
 		// esc
 		else if (act == 0x1B) {
+			break;
+		}
+		// <
+		else if (act == 0x3c) {
+			break;
+		}
+		// >
+		else if (act == 0x3e) {
 			break;
 		}
 		// 方向キーによる入力，ほかのキーと異なり特殊

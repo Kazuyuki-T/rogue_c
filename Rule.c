@@ -6,6 +6,11 @@
 #define TRUE 1
 #define FALSE 0
 
+// actionPlayerからの戻り値
+#define SUCCESS 1
+#define FAILURE 0
+#define NEXTFLR 2
+
 const int diffX[9] = { -1, 0, 1,-1, 0, 1,-1, 0, 1 };
 const int diffY[9] = {  1, 1, 1, 0, 0, 0,-1,-1,-1 };
 
@@ -37,7 +42,6 @@ void Rule_setStateInfo(Rule *thisRule, State *s) {
 	Rule_setState_setPlayer(thisRule, s, roomGridNum);
 	// 敵
 	Rule_setState_setEnemy(thisRule, s);
-
 }
 
 int Rule_setState_setMap(Rule *thisRule, State *s) {
@@ -107,11 +111,21 @@ void Rule_setState_setPlayer(Rule *thisRule, State *s, int gridnum) {
 void Rule_transition(Rule *thisRule, State *currentState, int act) {
 	// 遷移
 
+	// escのとき
+	if (act == 0x1b)	return;
+
 	// プレイヤが行動したならば，敵を動かす
-	int playerActionFlag = Rule_actionPlayer(thisRule, currentState, act);
-	if (playerActionFlag == TRUE) {
+	int playerAction = Rule_actionPlayer(thisRule, currentState, act);
+	if (playerAction == SUCCESS) {
 		// enemy
 		Rule_actionEnemy(thisRule, currentState);
+	}
+	else if (playerAction == FAILURE) {
+
+	}
+	else if (playerAction == NEXTFLR){
+		currentState->flr++;
+		Rule_setStateInfo(thisRule, currentState);
 	}
 }
 
@@ -138,12 +152,21 @@ int Rule_actionPlayer(Rule *thisRule, State *currentState, int act) {
 		else {
 			printf("                                                 \r");
 			printf("miss, ");
-			return FALSE;
+			return FAILURE;
 		}
 	}
 	else if (act == 'f' || act == 'p') {
 		printf("                                                 \r");
-		printf("f or p");
+		if (act == 'f') {
+			printf("use food");
+		}
+		else if (act == 'p') {
+			printf("use potion");
+		}
+	}
+	else if (act == 0x3c || act == 0x3e) {
+		// もし階段が足元にあるのならば
+
 	}
 	else {
 		// act1~9 -> dir0~8
@@ -154,19 +177,23 @@ int Rule_actionPlayer(Rule *thisRule, State *currentState, int act) {
 
 		// マップの範囲外
 		if (ny < 0 || thisRule->mapSizeY <= ny || nx < 0 || thisRule->mapSizeX <= nx) {
-			return FALSE;
+			return FAILURE;
 		}
-
 		// 進入禁止部分
 		if (currentState->map[ny][nx] == 1) {
-			return FALSE;
+			return FAILURE;
+		}
+		// 移動後の座標が階段だった場合
+		if (currentState->map[ny][nx] == 2) {
+			return NEXTFLR;
 		}
 
 		// いずれにも当てはまらない->行動成功
 		currentState->x += diffX[dir];
 		currentState->y += diffY[dir];
-		return TRUE;
 	}
+
+	return SUCCESS;
 }
 
 void Rule_actionEnemy(Rule *thisRule, State *currentState) {

@@ -6,14 +6,14 @@
 #define TRUE 1
 #define FALSE 0
 
-void GameManager_init(GameManager *thisGM) {
-	//srand((unsigned)time(NULL));
+Rule newRule;
+State newState;
+Player newPlayer;
 
-	Rule newRule;
+void GameManager_init(GameManager *thisGM) {
 	Rule_init(&newRule);
 	GameManager_setRule(thisGM, &newRule);
 	
-	State newState;
 	State_init(&newState);
 	// 配列の動的確保
 	State_initArray(&newState, thisGM->rule.mapSizeX, thisGM->rule.mapSizeY, thisGM->rule.enemyNumber);
@@ -24,10 +24,6 @@ void GameManager_init(GameManager *thisGM) {
 	Rule_setStateInfo(&(thisGM->rule), &(thisGM->state));
 
 
-	//State_output(&(thisGM->state), Rule_getMapSizeX(&(thisGM->rule)), Rule_getMapSizeX(&(thisGM->rule)), Rule_getEnemyNumber(&(thisGM->rule)));
-
-
-	Player newPlayer;
 	Player_init(&newPlayer);
 	GameManager_setPlayer(thisGM, &newPlayer);
 
@@ -55,7 +51,7 @@ void GameManager_run(GameManager *thisGM) {
 	#endif // DEBUG
 
 	printf("\n"); // １行目の空欄分
-	GameManager_output(thisGM);
+	GameManager_outputMap(thisGM);
 
 	///////////////
 	// main loop //
@@ -72,8 +68,7 @@ void GameManager_run(GameManager *thisGM) {
 
 		printf("                                                 \n");
 		GameManager_outputMap(thisGM); // 盤面の出力
-		GameManager_outputPlayerState(thisGM); // aaa
-
+		GameManager_outputPlayerState(thisGM); // プレイヤの情報の出力
 
 		// ゲーム１試行の終了条件
 		if (act == 0x1B) {
@@ -116,7 +111,7 @@ void GameManager_outputMap(GameManager *thisGM) {
 }
 
 void GameManager_outputPlayerState(GameManager *thisGM) {
-	printf("player:(%d, %d)    \n", thisGM->state.x, thisGM->state.y);
+	printf("%dF, player:(%d, %d)    \n", thisGM->state.flr, thisGM->state.x, thisGM->state.y);
 }
 
 void GameManager_setStage(GameManager *thisGM, State *s) {

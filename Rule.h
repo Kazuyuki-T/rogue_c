@@ -42,7 +42,7 @@ void Rule_setState_setItem(Rule *thisRule, State *s);
 void Rule_setState_setEnemy(Rule *thisRule, State *s);
 
 //
-void Rule_setState_setPlayer(Rule *thisRule, State *s);
+void Rule_setState_setPlayer(Rule *thisRule, State *s, int gridnum);
 
 // public
 void Rule_transition(Rule *thisRule, State *currentState, int act);

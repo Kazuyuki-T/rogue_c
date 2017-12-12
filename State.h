@@ -47,8 +47,5 @@ void State_makeEnemyArray(int **enemyArray, int enemyLength, int initVal);
 // private，動的確保した敵配列の解放
 void State_removeEnemyArray(int **enemyArray);
 
-// public，テスト出力
-void State_output(State *thisState, int mx, int my, int en);
-
 
 #endif
