@@ -54,7 +54,8 @@ int GameManager_run(GameManager *thisGM) {
 	// main loop //
 	///////////////
 	while (TRUE) {
-		printf("\x1b[1;1H"); // カーソルの位置を絶対座標1,1へ
+		//printf("\x1b[1;1H"); // カーソルの位置を絶対座標1,1へ
+		printf("\033[1;1H");
 
 		// プレイヤの行動決定
 		int act = Player_getAction(&(thisGM->player), &(thisGM->state));
