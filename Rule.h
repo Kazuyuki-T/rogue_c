@@ -40,28 +40,46 @@ void Rule_init(Rule *thisRule);
 void Rule_finish(Rule *thisRule);
 
 // public，Stateの情報のセット，map，obj配置
-void Rule_setStateInfo(Rule *thisRule, State *s);
+void Rule_setStateInfo(Rule *thisRule, State *s, int initFlag);
 
 // 
 int Rule_setState_setMap(Rule *thisRule, State *s);
 
 //
-void Rule_setState_setStair(Rule *thisRule, State *s, int gridnum);
+void Rule_setState_setStair(Rule *thisRule, State *s, int* gridnum);
 
 //
-void Rule_setState_setItem(Rule *thisRule, State *s);
+void Rule_setState_setItem(Rule *thisRule, State *s, int* gridnum);
 
 //
-void Rule_setState_setEnemy(Rule *thisRule, State *s);
+void Rule_setState_setEnemy(Rule *thisRule, State *s, int* gridnum);
 
 //
-void Rule_setState_setPlayer(Rule *thisRule, State *s, int gridnum);
+void Rule_setState_setEachEnemy(Rule *thisRule, State *s, int* gridnum, int en);
+
+//
+void Rule_setState_setPlayer(Rule *thisRule, State *s, int* gridnum);
+
+//
+void Rule_initPlayer(Rule *thisRule, State *s);
+
+//
+void Rule_updateEnemyMap(Rule *thisRule, State *s);
+
+//
+void Rule_updateSeemArea(Rule *thisRule, State *s);
 
 // public
 int Rule_transition(Rule *thisRule, State *currentState, int act);
 
 // private
 int Rule_actionPlayer(Rule *thisRule, State *currentState, int act);
+
+//
+int Rule_judgeCollision(Rule *thisRule, State *currentState, int nx, int ny);
+
+//
+void Rule_atkPlayer(Rule *thisRule, State *currentState, int en, int atkDamage);
 
 // private
 void Rule_actionEnemy(Rule *thisRule, State *currentState);

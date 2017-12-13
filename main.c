@@ -7,7 +7,7 @@ int main(void)
 
 	// GM_initとGM_finishはセット
 
-	GameManager_init(&gm); // 初期化
+	GameManager_init(&gm); // 初期化手続き
 
 	int result = GameManager_run(&gm); // 実行
 	
@@ -18,10 +18,11 @@ int main(void)
 		printf("GAME OVER...\n");
 	}
 	else {
-		// 途中終了escとか
+		// result == GAME_OVER での終了
+		// 途中終了：escとか
 	}
 
-	GameManager_finish(&gm); // 終了
+	GameManager_finish(&gm); // 終了手続き
 
 	return 0;
 }

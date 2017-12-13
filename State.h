@@ -5,6 +5,15 @@
 #include <stdio.h>
 
 typedef struct {
+	int testEnemy;
+
+	int id;
+	int active;
+	int hp, mhp;
+	int x, y;
+} Enemy;
+
+typedef struct {
 	int testState;
 
 	// all OK
@@ -16,8 +25,10 @@ typedef struct {
 	// NG or part of info
 	int **map;
 	int **seem;
-	int *enemies;
+	int **enemies;
 	int *killedEnemyTurn;
+
+	Enemy* enemiesSt;
 } State;
 
 // public
@@ -46,6 +57,12 @@ void State_makeEnemyArray(int **enemyArray, int enemyLength, int initVal);
 
 // private，動的確保した敵配列の解放
 void State_removeEnemyArray(int **enemyArray);
+
+//
+void State_makeEnemyStArray(Enemy **enemyStArray, int enemyLength);
+
+//
+void State_removeEnemyStArray(Enemy **enemyStArray);
 
 
 #endif

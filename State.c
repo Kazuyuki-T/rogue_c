@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include "State.h"
 
+#define TRUE 1
+#define FALSE 0
+
 void State_init(State *thisState) {
 	thisState->gameTurn = 0;
 	thisState->flr = 0;
@@ -11,10 +14,11 @@ void State_init(State *thisState) {
 
 void State_initArray(State *thisState, int mx, int my, int en) {
 	// 配列の動的確保
-	State_makeMapArray(&(thisState->map), mx, my, 0);
-	State_makeMapArray(&(thisState->seem), mx, my, 0);
-	State_makeEnemyArray(&(thisState->enemies), en, 0);
+	State_makeMapArray(&(thisState->map), mx, my, -1);
+	State_makeMapArray(&(thisState->seem), mx, my, -1);
+	State_makeMapArray(&(thisState->enemies), mx, my, -1);
 	State_makeEnemyArray(&(thisState->killedEnemyTurn), en, 0);
+	State_makeEnemyStArray(&(thisState->enemiesSt), en);
 }
 
 void State_finish(State *thisState) {
@@ -27,8 +31,9 @@ void State_finishArray(State *thisState) {
 	// 動的確保した配列の解放
 	State_removeMapArray(&(thisState->map), my);
 	State_removeMapArray(&(thisState->seem), my);
-	State_removeEnemyArray(&(thisState->enemies));
+	State_removeMapArray(&(thisState->enemies), my);
 	State_removeEnemyArray(&(thisState->killedEnemyTurn));
+	State_removeEnemyStArray(&(thisState->enemiesSt));
 }
 
 void State_copy(State *thisState, State *copyState) {
@@ -71,4 +76,21 @@ void State_makeEnemyArray(int **enemyArray, int enemyLength, int initVal) {
 
 void State_removeEnemyArray(int **enemyArray) {
 	free(*enemyArray);
+}
+
+void State_makeEnemyStArray(Enemy **enemyStArray, int enemyLength) {
+	*enemyStArray = (Enemy*)malloc(sizeof(Enemy) * enemyLength);
+	if (*enemyStArray == NULL) exit(1);
+
+	// 情報の初期化
+	for (int e = 0; e < enemyLength; e++) {
+		(*enemyStArray)[e].id = e;
+		(*enemyStArray)[e].active = FALSE;
+		(*enemyStArray)[e].x = 0;
+		(*enemyStArray)[e].y = 0;
+	}
+}
+
+void State_removeEnemyStArray(Enemy **enemyStArray) {
+	free(*enemyStArray);
 }

@@ -18,7 +18,8 @@ void GameManager_init(GameManager *thisGM) {
 
 
 	// Ruleに基づきマップ等の配置
-	Rule_setStateInfo(&(thisGM->rule), &(thisGM->state));
+	// 最初の盤面生成のため，プレイヤー情報を初期化
+	Rule_setStateInfo(&(thisGM->rule), &(thisGM->state), TRUE);
 
 
 	Player_init(&newPlayer);
@@ -50,6 +51,10 @@ int GameManager_run(GameManager *thisGM) {
 	printf("\n"); // １行目の空欄分
 	GameManager_outputMap(thisGM);
 
+	// 結果を格納
+	// ゲームクリアorゲームオーバーorゲーム中
+	int result;
+
 	///////////////
 	// main loop //
 	///////////////
@@ -59,7 +64,7 @@ int GameManager_run(GameManager *thisGM) {
 
 		// プレイヤの行動決定
 		int act = Player_getAction(&(thisGM->player), &(thisGM->state));
-		int result = Rule_transition(&(thisGM->rule), &(thisGM->state), act);
+		result = Rule_transition(&(thisGM->rule), &(thisGM->state), act);
 		//State *nextState = Rule_transition(&(thisGM->state), act);
 		//State_update(&(thisGM->state), nextState);
 
@@ -76,9 +81,11 @@ int GameManager_run(GameManager *thisGM) {
 		}
 		else {
 			// ゲームクリアorゲームオーバー
-			return result;
+			break;
 		}
 	}
+
+	return result;
 
 	#ifdef DEBUG
 	printf("Game end\n");
@@ -95,8 +102,11 @@ void GameManager_outputMap(GameManager *thisGM) {
 			if (thisGM->state.y == y && thisGM->state.x == x) {
 				printf("@ ");
 			}
+			else if (thisGM->state.enemies[y][x] != -1) {
+				printf("$ ");
+			}
 			else if (thisGM->state.map[y][x] == 2) {
-				printf("%% ");
+				printf("%% "); // %%で%出力
 			}
 			else if (thisGM->state.map[y][x] == 0) {
 				printf(". ");

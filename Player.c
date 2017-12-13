@@ -1,5 +1,6 @@
 ﻿#include <stdio.h>
 #include <stdlib.h>
+#include <conio.h>
 #include "Player.h"
 
 #define TRUE 1
