@@ -3,7 +3,10 @@
 #include "State.h"
 
 void State_init(State *thisState) {
+	thisState->gameTurn = 0;
 	thisState->flr = 0;
+	thisState->x = 0;
+	thisState->y = 0;
 }
 
 void State_initArray(State *thisState, int mx, int my, int en) {

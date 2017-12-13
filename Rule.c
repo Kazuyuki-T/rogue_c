@@ -3,14 +3,6 @@
 #include <stdlib.h>
 #include "Rule.h"
 
-#define TRUE 1
-#define FALSE 0
-
-// actionPlayerからの戻り値
-#define SUCCESS 1
-#define FAILURE 0
-#define NEXTFLR 2
-
 const int diffX[9] = { -1, 0, 1,-1, 0, 1,-1, 0, 1 };
 const int diffY[9] = {  1, 1, 1, 0, 0, 0,-1,-1,-1 };
 
@@ -18,13 +10,10 @@ void Rule_init(Rule *thisRule) {
 	srand((unsigned int)time(NULL));
 	//srand(0);
 
-	//Rule_setMapSizeX(thisRule, 20);
-	//Rule_setMapSizeY(thisRule, 20);
-	//Rule_setEnemyNumber(thisRule, 4);
-
 	thisRule->mapSizeX = 20;
 	thisRule->mapSizeY = 20;
 	thisRule->enemyNumber = 4;
+	thisRule->topFlr = 4;
 }
 
 void Rule_finish(Rule *thisRule) {
@@ -42,6 +31,9 @@ void Rule_setStateInfo(Rule *thisRule, State *s) {
 	Rule_setState_setPlayer(thisRule, s, roomGridNum);
 	// 敵
 	Rule_setState_setEnemy(thisRule, s);
+
+	// プレイヤから見えている範囲を更新
+	Rule_updateSeemArea(thisRule, s);
 }
 
 int Rule_setState_setMap(Rule *thisRule, State *s) {
@@ -108,24 +100,42 @@ void Rule_setState_setPlayer(Rule *thisRule, State *s, int gridnum) {
 	}
 }
 
-void Rule_transition(Rule *thisRule, State *currentState, int act) {
+int Rule_updateSeemArea(Rule *thisRule, State *s) {
+
+}
+
+int Rule_transition(Rule *thisRule, State *currentState, int act) {
 	// 遷移
 
 	// escのとき
-	if (act == 0x1b)	return;
+	if (act == 0x1b)	return GAME_PLAYING;
 
-	// プレイヤが行動したならば，敵を動かす
 	int playerAction = Rule_actionPlayer(thisRule, currentState, act);
 	if (playerAction == SUCCESS) {
+		// プレイヤが行動したならば，敵を動かす
+		
 		// enemy
 		Rule_actionEnemy(thisRule, currentState);
+
+		return GAME_PLAYING;
 	}
 	else if (playerAction == FAILURE) {
+		// プレイヤが行動しないとき
 
+		return GAME_PLAYING;
 	}
 	else if (playerAction == NEXTFLR){
+		// プレイヤの階層が変化したとき
 		currentState->flr++;
-		Rule_setStateInfo(thisRule, currentState);
+		if (currentState->flr == thisRule->topFlr) {
+			// 最上階到達 -> ゲームクリア
+			return GAME_CLEAR;
+		}
+		else {
+			// 途中 -> 新しい状況の生成
+			Rule_setStateInfo(thisRule, currentState);
+			return GAME_PLAYING;
+		}
 	}
 }
 
@@ -133,13 +143,16 @@ int Rule_actionPlayer(Rule *thisRule, State *currentState, int act) {
 	// a:Arrow or a:Staff -> 数字入力
 	// 1~9 or f:Food or p:Potion -> 直接行動
 	// ↑↓←→ -> 直接行動
+
+	// 矢or杖
 	if (act == 'a' || act == 's') {
 		printf("                                                 \r");
-		printf("direction : ");
+		printf("direction : "); // 方向の入力待ち
 
 		int actItem = _getch();
 		if (actItem == 0 || actItem == 224)	actItem = _getch();
 		int dir = Rule_convertActtoDir(actItem);
+		// -1のとき：0-8の方向に当てはまらない
 		if (dir != -1) {
 			printf("                                                 \r");
 			if (act == 'a') {
@@ -155,6 +168,7 @@ int Rule_actionPlayer(Rule *thisRule, State *currentState, int act) {
 			return FAILURE;
 		}
 	}
+	// 食料 or ポーション
 	else if (act == 'f' || act == 'p') {
 		printf("                                                 \r");
 		if (act == 'f') {
@@ -164,10 +178,11 @@ int Rule_actionPlayer(Rule *thisRule, State *currentState, int act) {
 			printf("use potion");
 		}
 	}
+	// 階段降りるアクション，いらない？
 	else if (act == 0x3c || act == 0x3e) {
 		// もし階段が足元にあるのならば
-
 	}
+	// その他，移動攻撃待機
 	else {
 		// act1~9 -> dir0~8
 		int dir = Rule_convertActtoDir(act);
@@ -183,14 +198,15 @@ int Rule_actionPlayer(Rule *thisRule, State *currentState, int act) {
 		if (currentState->map[ny][nx] == 1) {
 			return FAILURE;
 		}
-		// 移動後の座標が階段だった場合
-		if (currentState->map[ny][nx] == 2) {
-			return NEXTFLR;
-		}
-
+		
 		// いずれにも当てはまらない->行動成功
 		currentState->x += diffX[dir];
 		currentState->y += diffY[dir];
+
+		// 移動後の座標が階段だった場合
+		if (currentState->map[currentState->y][currentState->x] == 2) {
+			return NEXTFLR;
+		}
 	}
 
 	return SUCCESS;
@@ -233,24 +249,12 @@ int Rule_convertActtoDir(int act) {
 	}
 }
 
-void Rule_setMapSizeX(Rule *thisRule, int xsize) {
-	thisRule->mapSizeX = xsize;
-} 
-
 int Rule_getMapSizeX(Rule *thisRule) {
 	return thisRule->mapSizeX;
 }
 
-void Rule_setMapSizeY(Rule *thisRule, int ysize) {
-	thisRule->mapSizeY = ysize;
-}
-
 int Rule_getMapSizeY(Rule *thisRule) {
 	return thisRule->mapSizeY;
-}
-
-void Rule_setEnemyNumber(Rule *thisRule, int enemyNum) {
-	thisRule->enemyNumber = enemyNum;
 }
 
 int Rule_getEnemyNumber(Rule *thisRule) {

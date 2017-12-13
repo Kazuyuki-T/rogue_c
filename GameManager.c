@@ -3,9 +3,6 @@
 
 //#define DEBUG
 
-#define TRUE 1
-#define FALSE 0
-
 Rule newRule;
 State newState;
 Player newPlayer;
@@ -45,7 +42,7 @@ void GameManager_finish(GameManager *thisGM) {
 	#endif // DEBUG
 }
 
-void GameManager_run(GameManager *thisGM) {
+int GameManager_run(GameManager *thisGM) {
 	#ifdef DEBUG
 	printf("Game start\n");
 	#endif // DEBUG
@@ -57,12 +54,11 @@ void GameManager_run(GameManager *thisGM) {
 	// main loop //
 	///////////////
 	while (TRUE) {
-		//printf("\r"); // カーソルを先頭へ
 		printf("\x1b[1;1H"); // カーソルの位置を絶対座標1,1へ
 
 		// プレイヤの行動決定
 		int act = Player_getAction(&(thisGM->player), &(thisGM->state));
-		Rule_transition(&(thisGM->rule), &(thisGM->state), act);
+		int result = Rule_transition(&(thisGM->rule), &(thisGM->state), act);
 		//State *nextState = Rule_transition(&(thisGM->state), act);
 		//State_update(&(thisGM->state), nextState);
 
@@ -70,10 +66,16 @@ void GameManager_run(GameManager *thisGM) {
 		GameManager_outputMap(thisGM); // 盤面の出力
 		GameManager_outputPlayerState(thisGM); // プレイヤの情報の出力
 
-		// ゲーム１試行の終了条件
-		if (act == 0x1B) {
-			printf("Esc\n");
-			break;
+		if (result == GAME_PLAYING) {
+			// ゲームプレイ中
+			if (act == 0x1B) {
+				printf("Esc\n");
+				break;
+			}
+		}
+		else {
+			// ゲームクリアorゲームオーバー
+			return result;
 		}
 	}
 

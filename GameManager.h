@@ -23,7 +23,7 @@ void GameManager_init(GameManager *thisGM);
 void GameManager_finish(GameManager *thisGM);
 
 // public
-void GameManager_run(GameManager *thisGM);
+int GameManager_run(GameManager *thisGM);
 
 // private
 void GameManager_outputMap(GameManager *thisGM);

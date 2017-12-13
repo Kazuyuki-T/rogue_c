@@ -8,6 +8,17 @@
 #define MAPSIZEX 10
 #define MAPSIZEY 10
 
+#define TRUE 1
+#define FALSE 0
+
+// actionPlayerからの戻り値
+#define SUCCESS 1
+#define FAILURE 0
+#define NEXTFLR 2
+
+#define GAME_CLEAR 1
+#define GAME_OVER 2
+#define GAME_PLAYING 0
 
 typedef struct {
 	int testRule;
@@ -18,6 +29,8 @@ typedef struct {
 	int mapSizeY;
 	// private
 	int enemyNumber;
+	// private
+	int topFlr;
 } Rule;
 
 // public
@@ -45,7 +58,7 @@ void Rule_setState_setEnemy(Rule *thisRule, State *s);
 void Rule_setState_setPlayer(Rule *thisRule, State *s, int gridnum);
 
 // public
-void Rule_transition(Rule *thisRule, State *currentState, int act);
+int Rule_transition(Rule *thisRule, State *currentState, int act);
 
 // private
 int Rule_actionPlayer(Rule *thisRule, State *currentState, int act);
@@ -56,20 +69,11 @@ void Rule_actionEnemy(Rule *thisRule, State *currentState);
 // private, act1~9 -> dir0~8
 int Rule_convertActtoDir(int act);
 
-// private
-void Rule_setMapSizeX(Rule *thisRule, int xsize);
-
 // public
 int Rule_getMapSizeX(Rule *thisRule);
 
-// private
-void Rule_setMapSizeY(Rule *thisRule, int ysize);
-
 // public
 int Rule_getMapSizeY(Rule *thisRule);
-
-// private
-void Rule_setEnemyNumber(Rule *thisRule, int enemyNum);
 
 // public
 int Rule_getEnemyNumber(Rule *thisRule);
