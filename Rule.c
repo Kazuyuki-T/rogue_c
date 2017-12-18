@@ -304,10 +304,10 @@ int Rule_actionPlayer(Rule *thisRule, State *currentState, int act) {
 			// 斜め攻撃判定 -> return
 			Rule_atkPlayer(thisRule, currentState, nextEnemy, 10);
 			printf("                                                 \r");
-			printf("atk. ");
-			for (int en = 0; en < thisRule->enemyNumber; en++) {
+			printf("atk.");
+			/*for (int en = 0; en < thisRule->enemyNumber; en++) {
 				printf("%d:%d-%d, ", en, currentState->enemiesSt[en].hp, currentState->enemiesSt[en].active);
-			}
+			}*/
 		}
 		else {
 			currentState->x += diffX[dir];
