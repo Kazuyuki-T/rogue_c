@@ -58,12 +58,10 @@ void Rule_makeArray(State* s) {
 }
 
 void Rule_freeArray(State* s) {
-	// 配列の要素数の計算
-	int my = sizeof(s->map) / sizeof(s->map[0]);
 	// 動的確保した配列の解放
-	State_removeMapArray(&(s->map), my);
-	State_removeMapArray(&(s->seem), my);
-	State_removeMapArray(&(s->enemies), my);
+	State_removeMapArray(&(s->map), MAPSIZEY);
+	State_removeMapArray(&(s->seem), MAPSIZEY);
+	State_removeMapArray(&(s->enemies), MAPSIZEY);
 	State_removeEnemyArray(&(s->killedEnemyTurn));
 	State_removeEnemyStArray(&(s->enemiesSt));
 }
@@ -76,12 +74,14 @@ State* Rule_getNextState(State* s, int act) {
 
 
 	// 
+	printf("%d\n", act);
 
 	return &nextState;
 }
 
 void Rule_copyState(State* cs, State* ns) {
 	ns->gameTurn = cs->gameTurn;
+	ns->gameFlag = cs->gameFlag;
 	ns->flr = cs->flr;
 	ns->hp = cs->hp;
 	ns->mhp = cs->mhp;
@@ -95,18 +95,23 @@ void Rule_copyState(State* cs, State* ns) {
 	ns->itemNumber = cs->itemNumber;
 	ns->x = cs->x;
 	ns->y = cs->y;
+	ns->testState = cs->testState;
 	for (int y = 0; y < MAPSIZEY; y++) {
 		for (int x = 0; x < MAPSIZEY; x++) {
 			ns->map[y][x] = cs->map[y][x];
 			ns->seem[y][x] = cs->seem[y][x];
+			ns->enemies[y][x] = cs->enemies[y][x];
 		}
 	}
 	for (int en = 0; en < ENEMYNUMBER; en++) {
-		ns->enemies[en] = cs->enemies[en];
 		ns->killedEnemyTurn[en] = cs->killedEnemyTurn[en];
-		
 		ns->enemiesSt[en].hp = cs->enemiesSt[en].hp;
-
+		ns->enemiesSt[en].mhp = cs->enemiesSt[en].mhp;
+		ns->enemiesSt[en].id = cs->enemiesSt[en].id;
+		ns->enemiesSt[en].active = cs->enemiesSt[en].active;
+		ns->enemiesSt[en].x = cs->enemiesSt[en].x;
+		ns->enemiesSt[en].y = cs->enemiesSt[en].y;
+		ns->enemiesSt[en].testEnemy = cs->enemiesSt[en].testEnemy;
 	}
 }
 

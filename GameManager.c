@@ -53,6 +53,7 @@ int GameManager_run() {
 
 	int result = cState->gameFlag;
 	Rule_finish();
+	printf("test");
 	return result;
 
 	#ifdef DEBUG

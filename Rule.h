@@ -45,6 +45,8 @@ void Rule_makeArray(State* s);
 
 void Rule_freeArray(State* s);
 
+void Rule_copyState(State* cs, State* ns);
+
 
 // public，Stateの情報のセット，map，obj配置
 void Rule_setStateInfo(State *s, int initFlag);
