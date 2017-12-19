@@ -18,5 +18,6 @@ void Player_finish(Player *thisPlayer);
 // public
 int Player_getAction(Player *thisPlayer, State *currentState);
 
+int Player_decideAction(State* s);
 
 #endif

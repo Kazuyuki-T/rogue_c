@@ -7,52 +7,114 @@
 const int diffX[9] = { -1, 0, 1,-1, 0, 1,-1, 0, 1 };
 const int diffY[9] = {  1, 1, 1, 0, 0, 0,-1,-1,-1 };
 
-void Rule_init(Rule *thisRule) {
+State currentState;
+State nextState;
+
+State* Rule_init(void) {
 	srand((unsigned int)time(NULL));
 	//srand(0);
 
-	thisRule->mapSizeX = 20;
-	thisRule->mapSizeY = 20;
-	thisRule->enemyNumber = 4;
-	thisRule->topFlr = 4;
-}
+	Rule_makeArray(&currentState);
+	Rule_makeArray(&nextState);
 
-void Rule_finish(Rule *thisRule) {
-
-}
-
-void Rule_setStateInfo(Rule *thisRule, State *s, int initFalg) {
 	// obj配置できる床の数
 	// この部分は連結リストで用意し，必要に応じて追加・削除したほうが良いか？
 	// 最大数（マップのサイズ）が判明しているため，カーソルによる線形リストでも良いかもしれない
 
 	// マップの作製->obj配置できる床の数
-	int roomGridNum = Rule_setState_setMap(thisRule, s);
+	int roomGridNum = Rule_setState_setMap(&currentState);
 	// 階段
-	Rule_setState_setStair(thisRule, s, &roomGridNum);
+	Rule_setState_setStair(&currentState, &roomGridNum);
 	// アイテム
-	Rule_setState_setItem(thisRule, s, &roomGridNum);
+	Rule_setState_setItem(&currentState, &roomGridNum);
 	// プレイヤ
-	Rule_setState_setPlayer(thisRule, s, &roomGridNum);
-	// プレイヤの初期化を行うか否か
-	// ゲームの初期化の際には行う
-	// フロアの変更の際には行わない
-	if(initFalg == TRUE)	Rule_initPlayer(thisRule, s);
+	Rule_setState_setPlayer(&currentState, &roomGridNum);
+	// プレイヤの初期化
+	Rule_initPlayer(&currentState);
 	// 敵
-	Rule_setState_setEnemy(thisRule, s, &roomGridNum);
+	Rule_setState_setEnemy(&currentState, &roomGridNum);
 
 	// map上の敵の座標を更新
-	Rule_updateEnemyMap(thisRule, s);
+	Rule_updateEnemyMap(&currentState);
 
 	// プレイヤから見えている範囲を更新
-	Rule_updateSeemArea(thisRule, s);
+	Rule_updateSeemArea(&currentState);
+
+	return &currentState;
 }
 
-int Rule_setState_setMap(Rule *thisRule, State *s) {
+void Rule_finish() {
+	Rule_freeArray(&currentState);
+	Rule_freeArray(&nextState);
+}
+
+void Rule_makeArray(State* s) {
+	// 配列の動的確保
+	State_makeMapArray(&(s->map), MAPSIZEX, MAPSIZEY, -1);
+	State_makeMapArray(&(s->seem), MAPSIZEX, MAPSIZEY, -1);
+	State_makeMapArray(&(s->enemies), MAPSIZEX, MAPSIZEY, -1);
+	State_makeEnemyArray(&(s->killedEnemyTurn), ENEMYNUMBER, 0);
+	State_makeEnemyStArray(&(s->enemiesSt), ENEMYNUMBER);
+}
+
+void Rule_freeArray(State* s) {
+	// 配列の要素数の計算
+	int my = sizeof(s->map) / sizeof(s->map[0]);
+	// 動的確保した配列の解放
+	State_removeMapArray(&(s->map), my);
+	State_removeMapArray(&(s->seem), my);
+	State_removeMapArray(&(s->enemies), my);
+	State_removeEnemyArray(&(s->killedEnemyTurn));
+	State_removeEnemyStArray(&(s->enemiesSt));
+}
+
+State* Rule_getNextState(State* s, int act) {
+	// 状態+行動->新しい状態
+	
+	// 複製
+	Rule_copyState(s, &nextState);
+
+
+	// 
+
+	return &nextState;
+}
+
+void Rule_copyState(State* cs, State* ns) {
+	ns->gameTurn = cs->gameTurn;
+	ns->flr = cs->flr;
+	ns->hp = cs->hp;
+	ns->mhp = cs->mhp;
+	ns->stm = cs->stm;
+	ns->lv = cs->lv;
+	ns->exp = cs->exp;
+	ns->pt = cs->pt;
+	ns->fd = cs->fd;
+	ns->ar = cs->ar;
+	ns->st = cs->st;
+	ns->itemNumber = cs->itemNumber;
+	ns->x = cs->x;
+	ns->y = cs->y;
+	for (int y = 0; y < MAPSIZEY; y++) {
+		for (int x = 0; x < MAPSIZEY; x++) {
+			ns->map[y][x] = cs->map[y][x];
+			ns->seem[y][x] = cs->seem[y][x];
+		}
+	}
+	for (int en = 0; en < ENEMYNUMBER; en++) {
+		ns->enemies[en] = cs->enemies[en];
+		ns->killedEnemyTurn[en] = cs->killedEnemyTurn[en];
+		
+		ns->enemiesSt[en].hp = cs->enemiesSt[en].hp;
+
+	}
+}
+
+int Rule_setState_setMap(State *s) {
 	int count = 0;
-	for (int y = 0; y < thisRule->mapSizeY; y++) {
-		for (int x = 0; x < thisRule->mapSizeX; x++) {
-			if (y == 0 || x == 0 || y == thisRule->mapSizeY - 1 || x == thisRule->mapSizeX - 1) {
+	for (int y = 0; y < MAPSIZEY; y++) {
+		for (int x = 0; x < MAPSIZEX; x++) {
+			if (y == 0 || x == 0 || y == MAPSIZEY - 1 || x == MAPSIZEX - 1) {
 				s->map[y][x] = 1;
 			}
 			else {
@@ -66,13 +128,13 @@ int Rule_setState_setMap(Rule *thisRule, State *s) {
 	return count;
 }
 
-void Rule_setState_setStair(Rule *thisRule, State *s, int* gridnum) {
+void Rule_setState_setStair(State *s, int* gridnum) {
 	// 床の上に生成
 	int stairPos = Rule_getRandom(0, *gridnum - 1);
 	(*gridnum)--;
 	int count = 0;
-	for (int y = 0; y < thisRule->mapSizeY; y++) {
-		for (int x = 0; x < thisRule->mapSizeX; x++) {
+	for (int y = 0; y < MAPSIZEY; y++) {
+		for (int x = 0; x < MAPSIZEX; x++) {
 			// 
 			if (s->map[y][x] == 0) {
 				if(count == stairPos){
@@ -86,23 +148,23 @@ void Rule_setState_setStair(Rule *thisRule, State *s, int* gridnum) {
 	}
 }
 
-void Rule_setState_setItem(Rule *thisRule, State *s, int* gridnum) {
+void Rule_setState_setItem(State *s, int* gridnum) {
 
 }
 
-void Rule_setState_setEnemy(Rule *thisRule, State *s, int* gridnum) {
+void Rule_setState_setEnemy(State *s, int* gridnum) {
 	// 順番に生成
-	for (int en = 0; en < thisRule->enemyNumber; en++) {
-		Rule_setState_setEachEnemy(thisRule, s, gridnum, en);
+	for (int en = 0; en < ENEMYNUMBER; en++) {
+		Rule_setState_setEachEnemy(s, gridnum, en);
 	}
 }
 
-void Rule_setState_setEachEnemy(Rule *thisRule, State *s, int* gridnum, int en) {
+void Rule_setState_setEachEnemy(State *s, int* gridnum, int en) {
 	int enemyPos = Rule_getRandom(0, *gridnum - 1);
 	(*gridnum)--;
 	int count = 0;
-	for (int y = 0; y < thisRule->mapSizeY; y++) {
-		for (int x = 0; x < thisRule->mapSizeX; x++) {
+	for (int y = 0; y < MAPSIZEY; y++) {
+		for (int x = 0; x < MAPSIZEX; x++) {
 			// 
 			if (s->map[y][x] == 0) {
 				if (count == enemyPos) {
@@ -120,12 +182,12 @@ void Rule_setState_setEachEnemy(Rule *thisRule, State *s, int* gridnum, int en) 
 	}
 }
 
-void Rule_setState_setPlayer(Rule *thisRule, State *s, int* gridnum) {
+void Rule_setState_setPlayer(State *s, int* gridnum) {
 	int playerPos = Rule_getRandom(0, *gridnum - 1);
 	(*gridnum)--;
 	int count = 0;
-	for (int y = 0; y < thisRule->mapSizeY; y++) {
-		for (int x = 0; x < thisRule->mapSizeX; x++) {
+	for (int y = 0; y < MAPSIZEY; y++) {
+		for (int x = 0; x < MAPSIZEX; x++) {
 			// 
 			if (s->map[y][x] == 0) {
 				if (count == playerPos) {
@@ -140,21 +202,21 @@ void Rule_setState_setPlayer(Rule *thisRule, State *s, int* gridnum) {
 	}
 }
 
-void Rule_initPlayer(Rule *thisRule, State *s) {
+void Rule_initPlayer(State *s) {
 	s->mhp = 100;
 	s->hp = s->mhp;
 }
 
-void Rule_updateEnemyMap(Rule *thisRule, State *s) {
-	for (int y = 0; y < thisRule->mapSizeY; y++) {
-		for (int x = 0; x < thisRule->mapSizeX; x++) {
+void Rule_updateEnemyMap(State *s) {
+	for (int y = 0; y < MAPSIZEY; y++) {
+		for (int x = 0; x < MAPSIZEX; x++) {
 			s->enemies[y][x] = -1;
 		}
 	}
 
 	// 敵のいる座標：敵ID
 	// その他：-1
-	for (int en = 0; en < thisRule->enemyNumber; en++) {
+	for (int en = 0; en < ENEMYNUMBER; en++) {
 		if (s->enemiesSt[en].active == TRUE) {
 			int x = s->enemiesSt[en].x;
 			int y = s->enemiesSt[en].y;
@@ -163,18 +225,29 @@ void Rule_updateEnemyMap(Rule *thisRule, State *s) {
 	}
 }
 
-void Rule_updateSeemArea(Rule *thisRule, State *s) {
-	for (int y = 0; y < thisRule->mapSizeY; y++) {
-		for (int x = 0; x < thisRule->mapSizeX; x++) {
+void Rule_updateSeemArea(State *s) {
+	for (int y = 0; y < MAPSIZEY; y++) {
+		for (int x = 0; x < MAPSIZEX; x++) {
 			s->seem[y][x] = 1;
 		}
 	}
 }
 
-int Rule_countSetableObjGridNum(Rule *thisRule, State *s) {
+
+
+
+
+
+
+
+
+
+
+
+int Rule_countSetableObjGridNum(State *s) {
 	int count = 0;
-	for (int y = 0; y < thisRule->mapSizeY; y++) {
-		for (int x = 0; x < thisRule->mapSizeX; x++) {
+	for (int y = 0; y < MAPSIZEY; y++) {
+		for (int x = 0; x < MAPSIZEX; x++) {
 			if (s->map[y][x] == 0) {
 				count++;
 			}
@@ -184,26 +257,26 @@ int Rule_countSetableObjGridNum(Rule *thisRule, State *s) {
 	return count;
 }
 
-int Rule_transition(Rule *thisRule, State *currentState, int act) {
+int Rule_transition(State *currentState, int act) {
 	// 遷移
 
 	// escのとき
 	if (act == 0x1b)	return GAME_PLAYING;
 
-	int playerAction = Rule_actionPlayer(thisRule, currentState, act);
+	int playerAction = Rule_actionPlayer(currentState, act);
 	if (playerAction == SUCCESS) {
 		// プレイヤが行動したならば，敵を動かす
 		
 
 		// ここで行うべきか？別の部分でまとめて行うべきでは？
 		// map上の敵の座標を更新
-		Rule_updateEnemyMap(thisRule, currentState);
+		Rule_updateEnemyMap(currentState);
 		// プレイヤから見えている範囲を更新
-		Rule_updateSeemArea(thisRule, currentState);
+		Rule_updateSeemArea(currentState);
 
 
 		// enemy
-		Rule_actionEnemy(thisRule, currentState);
+		Rule_actionEnemy(currentState);
 
 		return GAME_PLAYING;
 	}
@@ -215,13 +288,13 @@ int Rule_transition(Rule *thisRule, State *currentState, int act) {
 	else if (playerAction == NEXTFLR){
 		// プレイヤの階層が変化したとき
 		currentState->flr++;
-		if (currentState->flr == thisRule->topFlr) {
+		if (currentState->flr == TOPFLR) {
 			// 最上階到達 -> ゲームクリア
 			return GAME_CLEAR;
 		}
 		else {
 			// 途中 -> 新しい状況の生成
-			Rule_setStateInfo(thisRule, currentState, FALSE);
+			Rule_setStateInfo(currentState, FALSE);
 			return GAME_PLAYING;
 		}
 	}
@@ -231,7 +304,34 @@ int Rule_transition(Rule *thisRule, State *currentState, int act) {
 	}
 }
 
-int Rule_actionPlayer(Rule *thisRule, State *currentState, int act) {
+void Rule_setStateInfo(State *s, int initFalg) {
+	// obj配置できる床の数
+	// この部分は連結リストで用意し，必要に応じて追加・削除したほうが良いか？
+	// 最大数（マップのサイズ）が判明しているため，カーソルによる線形リストでも良いかもしれない
+
+	// マップの作製->obj配置できる床の数
+	int roomGridNum = Rule_setState_setMap(s);
+	// 階段
+	Rule_setState_setStair(s, &roomGridNum);
+	// アイテム
+	Rule_setState_setItem(s, &roomGridNum);
+	// プレイヤ
+	Rule_setState_setPlayer(s, &roomGridNum);
+	// プレイヤの初期化を行うか否か
+	// ゲームの初期化の際には行う
+	// フロアの変更の際には行わない
+	if (initFalg == TRUE)	Rule_initPlayer(s);
+	// 敵
+	Rule_setState_setEnemy(s, &roomGridNum);
+
+	// map上の敵の座標を更新
+	Rule_updateEnemyMap(s);
+
+	// プレイヤから見えている範囲を更新
+	Rule_updateSeemArea(s);
+}
+
+int Rule_actionPlayer(State *currentState, int act) {
 	// a:Arrow or a:Staff -> 数字入力
 	// 1~9 or f:Food or p:Potion -> 直接行動
 	// ↑↓←→ -> 直接行動
@@ -283,7 +383,7 @@ int Rule_actionPlayer(Rule *thisRule, State *currentState, int act) {
 		int ny = currentState->y + diffY[dir];
 
 		// マップの範囲外
-		if (ny < 0 || thisRule->mapSizeY <= ny || nx < 0 || thisRule->mapSizeX <= nx) {
+		if (ny < 0 || MAPSIZEY <= ny || nx < 0 || MAPSIZEX <= nx) {
 			return FAILURE;
 		}
 		// 進入禁止部分
@@ -299,10 +399,10 @@ int Rule_actionPlayer(Rule *thisRule, State *currentState, int act) {
 		// 攻撃or待機or移動
 
 		// 敵との衝突判定
-		int nextEnemy = Rule_judgeCollision(thisRule, currentState, nx, ny);
+		int nextEnemy = Rule_judgeCollision(currentState, nx, ny);
 		if (nextEnemy != -1) {
 			// 斜め攻撃判定 -> return
-			Rule_atkPlayer(thisRule, currentState, nextEnemy, 10);
+			Rule_atkPlayer(currentState, nextEnemy, 10);
 			printf("                                                 \r");
 			printf("atk.");
 			/*for (int en = 0; en < thisRule->enemyNumber; en++) {
@@ -323,8 +423,8 @@ int Rule_actionPlayer(Rule *thisRule, State *currentState, int act) {
 	return SUCCESS;
 }
 
-int Rule_judgeCollision(Rule *thisRule, State *currentState, int nx, int ny) {
-	for (int en = 0; en < thisRule->enemyNumber; en++) {
+int Rule_judgeCollision(State *currentState, int nx, int ny) {
+	for (int en = 0; en < ENEMYNUMBER; en++) {
 		if (currentState->enemiesSt[en].x == nx && currentState->enemiesSt[en].y == ny && currentState->enemiesSt[en].active == TRUE) {
 			return en;
 		}
@@ -332,7 +432,7 @@ int Rule_judgeCollision(Rule *thisRule, State *currentState, int nx, int ny) {
 	return -1;
 }
 
-void Rule_atkPlayer(Rule *thisRule, State *currentState, int en, int atkDamage) {
+void Rule_atkPlayer(State *currentState, int en, int atkDamage) {
 	if (currentState->enemiesSt[en].hp - atkDamage <= 0) {
 		// 敵の死亡処理
 		currentState->enemiesSt[en].hp = 0;
@@ -348,7 +448,7 @@ void Rule_atkPlayer(Rule *thisRule, State *currentState, int en, int atkDamage) 
 	}
 }
 
-void Rule_actionEnemy(Rule *thisRule, State *currentState) {
+void Rule_actionEnemy(State *currentState) {
 	// enemyのアクション
 	
 	// enemymapの更新
@@ -403,4 +503,59 @@ int Rule_getEnemyNumber(Rule *thisRule) {
 int Rule_getRandom(int min, int max)
 {
 	return min + (int)(rand()*(max - min + 1.0) / (1.0 + RAND_MAX));
+}
+
+void State_makeMapArray(int ***mapArray, int lengthX, int lengthY, int initVal) {
+	*mapArray = (int**)malloc(sizeof(int) * lengthY);
+	if (*mapArray == NULL) exit(1);
+
+	for (int y = 0; y < lengthY; y++) {
+		(*mapArray)[y] = (int*)malloc(sizeof(int) * lengthX);
+		if ((*mapArray)[y] == NULL) exit(1);
+	}
+
+	// initValによる初期化
+	for (int y = 0; y < lengthY; y++) {
+		for (int x = 0; x < lengthX; x++) {
+			(*mapArray)[y][x] = initVal;
+		}
+	}
+}
+
+void State_removeMapArray(int ***mapArray, int lengthY) {
+	for (int y = 0; y < lengthY; y++) {
+		free((*mapArray)[y]);
+	}
+	free(*mapArray);
+}
+
+void State_makeEnemyArray(int **enemyArray, int enemyLength, int initVal) {
+	*enemyArray = (int*)malloc(sizeof(int) * enemyLength);
+	if (*enemyArray == NULL) exit(1);
+
+	// initValによる初期化
+	for (int e = 0; e < enemyLength; e++) {
+		(*enemyArray)[e] = initVal;
+	}
+}
+
+void State_removeEnemyArray(int **enemyArray) {
+	free(*enemyArray);
+}
+
+void State_makeEnemyStArray(Enemy **enemyStArray, int enemyLength) {
+	*enemyStArray = (Enemy*)malloc(sizeof(Enemy) * enemyLength);
+	if (*enemyStArray == NULL) exit(1);
+
+	// 情報の初期化
+	for (int e = 0; e < enemyLength; e++) {
+		(*enemyStArray)[e].id = e;
+		(*enemyStArray)[e].active = FALSE;
+		(*enemyStArray)[e].x = 0;
+		(*enemyStArray)[e].y = 0;
+	}
+}
+
+void State_removeEnemyStArray(Enemy **enemyStArray) {
+	free(*enemyStArray);
 }

@@ -7,38 +7,8 @@
 #include "State.h"
 #include "Player.h"
 
-typedef struct {
-	// private
-	State state;
-	// private
-	Player player;
-	// private
-	Rule rule;
-} GameManager;
-
 // public
-void GameManager_init(GameManager *thisGM);
-
-// public
-void GameManager_finish(GameManager *thisGM);
-
-// public
-int GameManager_run(GameManager *thisGM);
-
-// private
-void GameManager_outputMap(GameManager *thisGM);
-
-// private
-void GameManager_outputPlayerState(GameManager *thisGM);
-
-// private
-void GameManager_setStage(GameManager *thisGM, State *s);
-
-// private
-void GameManager_setPlayer(GameManager *thisGM, Player *p);
-
-// private
-void GameManager_setRule(GameManager *thisGM, Rule *r);
+int GameManager_run();
 
 
 #endif
