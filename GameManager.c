@@ -22,13 +22,16 @@ int main(void)
 	return 0;
 }
 
-int GameManager_run() {
+int GameManager_run(void) {
 	#ifdef DEBUG
 	printf("Game start\n");
 	#endif // DEBUG
 
 	State* cState = Rule_init();
 	State* nState;
+
+	//printf("(%d, %d)\n", cState->x, cState->y);
+	GameManager_outputMap(cState);
 
 	///////////////
 	// main loop //
@@ -37,6 +40,8 @@ int GameManager_run() {
 		int act = Player_decideAction(cState);
 		nState = Rule_getNextState(cState, act);
 		cState = nState; // ポインタ付け替え
+
+		//printf("(%d, %d)\n", cState->x, cState->y);
 
 		if (cState->gameFlag == GAME_PLAYING) {
 			// ゲームプレイ中
@@ -60,3 +65,10 @@ int GameManager_run() {
 	printf("Game end\n");
 	#endif // DEBUG
 }
+
+void GameManager_outputMap(State* s) {
+	//
+
+}
+
+

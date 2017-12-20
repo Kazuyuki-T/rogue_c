@@ -8,7 +8,7 @@
 #include "Player.h"
 
 // public
-int GameManager_run();
+int GameManager_run(void);
 
 
 #endif

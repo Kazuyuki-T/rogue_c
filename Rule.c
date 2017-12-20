@@ -67,14 +67,17 @@ void Rule_freeArray(State* s) {
 }
 
 State* Rule_getNextState(State* s, int act) {
-	// 状態+行動->新しい状態
+	// 状態 + 行動 -> 新しい状態
 	
-	// 複製
+	// Stateの複製
 	Rule_copyState(s, &nextState);
+	// Stateの更新
+	//Rule_transition(&nextState, act);
 
+	actPlayerTest(&nextState, act);
 
 	// 
-	printf("%d\n", act);
+	//printf("%d\n", act);
 
 	return &nextState;
 }
@@ -237,6 +240,156 @@ void Rule_updateSeemArea(State *s) {
 		}
 	}
 }
+
+void Rule_transition(State *s, int act) {
+	// 遷移
+
+	// escのとき
+	if (act == 0x1b) {
+		s->gameFlag = GAME_PLAYING;
+	}
+	else {
+		int playerAction = Rule_actPlayer(s, act);
+		if (playerAction == SUCCESS) {
+			// プレイヤが行動したならば，敵を動かす
+
+
+			// ここで行うべきか？別の部分でまとめて行うべきでは？
+			// map上の敵の座標を更新
+			Rule_updateEnemyMap(s);
+			// プレイヤから見えている範囲を更新
+			Rule_updateSeemArea(s);
+
+
+			// enemy
+			//Rule_actionEnemy(s);
+
+			s->gameFlag = GAME_PLAYING;
+		}
+		else if (playerAction == FAILURE) {
+			// プレイヤが行動しないとき
+
+			s->gameFlag = GAME_PLAYING;
+		}
+		else if (playerAction == NEXTFLR) {
+			// プレイヤの階層が変化したとき
+			s->flr++;
+			if (s->flr == TOPFLR) {
+				// 最上階到達 -> ゲームクリア
+				s->gameFlag = GAME_CLEAR;
+			}
+			else {
+				// 途中 -> 新しい状況の生成
+				//Rule_setStateInfo(s, FALSE);
+				s->gameFlag = GAME_PLAYING;
+			}
+		}
+		else {
+			// playerAction == ???
+			s->gameFlag = GAME_PLAYING;
+		}
+	}
+}
+
+void actPlayerTest(State *s, int act) {
+	int dir = Rule_convertActtoDir(act);
+	s->x += diffX[dir];
+	s->y += diffY[dir];
+}
+
+int Rule_actPlayer(State *s, int act) {
+	// a:Arrow or a:Staff -> 数字入力
+	// 1~9 or f:Food or p:Potion -> 直接行動
+	// ↑↓←→ -> 直接行動
+
+	// 矢or杖
+	if (act == 'a' || act == 's') {
+		printf("                                                 \r");
+		printf("direction : "); // 方向の入力待ち
+
+		int actItem = _getch();
+		if (actItem == 0 || actItem == 224)	actItem = _getch();
+		int dir = Rule_convertActtoDir(actItem);
+		// -1のとき：0-8の方向に当てはまらない
+		if (dir != -1) {
+			printf("                                                 \r");
+			if (act == 'a') {
+				printf("use arrrow %d", dir);
+			}
+			else if (act == 's') {
+				printf("use staff %d", dir);
+			}
+		}
+		else {
+			printf("                                                 \r");
+			printf("miss, ");
+			return FAILURE;
+		}
+	}
+	// 食料 or ポーション
+	else if (act == 'f' || act == 'p') {
+		printf("                                                 \r");
+		if (act == 'f') {
+			printf("use food");
+		}
+		else if (act == 'p') {
+			printf("use potion");
+		}
+	}
+	// 階段降りるアクション，いらない？
+	else if (act == 0x3c || act == 0x3e) {
+		// もし階段が足元にあるのならば
+	}
+	// その他，移動・攻撃・待機
+	else {
+		// act1~9 -> dir0~8
+		int dir = Rule_convertActtoDir(act);
+
+		int nx = s->x + diffX[dir];
+		int ny = s->y + diffY[dir];
+
+		// マップの範囲外
+		if (ny < 0 || MAPSIZEY <= ny || nx < 0 || MAPSIZEX <= nx) {
+			return FAILURE;
+		}
+		// 進入禁止部分
+		if (s->map[ny][nx] == 1) {
+			return FAILURE;
+		}
+		// 斜め移動チェック
+		//if (斜め攻撃の時) {
+		//	return FAILURE;
+		//}
+
+		// いずれにも当てはまらない->行動成功
+		// 攻撃or待機or移動
+
+		// 敵との衝突判定
+		int nextEnemy = Rule_judgeCollision(s, nx, ny);
+		if (nextEnemy != -1) {
+			// 斜め攻撃判定 -> return
+			Rule_atkPlayer(s, nextEnemy, 10);
+			printf("                                                 \r");
+			printf("atk.");
+			/*for (int en = 0; en < thisRule->enemyNumber; en++) {
+			printf("%d:%d-%d, ", en, currentState->enemiesSt[en].hp, currentState->enemiesSt[en].active);
+			}*/
+		}
+		else {
+			s->x += diffX[dir];
+			s->y += diffY[dir];
+
+			// 移動後の座標が階段だった場合
+			if (s->map[s->y][s->x] == 2) {
+				return NEXTFLR;
+			}
+		}
+	}
+
+	return SUCCESS;
+}
+
+
 
 
 

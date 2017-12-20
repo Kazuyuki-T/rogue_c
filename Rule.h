@@ -47,6 +47,8 @@ void Rule_freeArray(State* s);
 
 void Rule_copyState(State* cs, State* ns);
 
+void actPlayerTest(State *s, int act);
+
 
 // public，Stateの情報のセット，map，obj配置
 void Rule_setStateInfo(State *s, int initFlag);
