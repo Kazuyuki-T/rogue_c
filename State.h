@@ -4,6 +4,9 @@
 
 #include <stdio.h>
 
+#define TRUE 1
+#define FALSE 0
+
 #define GAME_CLEAR 1
 #define GAME_OVER 2
 #define GAME_PLAYING 0

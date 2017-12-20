@@ -7,9 +7,10 @@
 #include "State.h"
 #include "Player.h"
 
-// public
+// 1ゲームの実行，戻り値が勝敗
 int GameManager_run(void);
 
+// 出力
 void GameManager_outputMap(State* s);
 
 

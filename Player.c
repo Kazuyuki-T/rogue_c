@@ -3,9 +3,6 @@
 #include <conio.h>
 #include "Player.h"
 
-#define TRUE 1
-#define FALSE 0
-
 void Player_init(Player *thisPlayer) {
 	thisPlayer->testPlayer = 0;
 }

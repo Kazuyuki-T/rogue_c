@@ -44,15 +44,13 @@ int GameManager_run(void) {
 		//printf("(%d, %d)\n", cState->x, cState->y);
 		GameManager_outputMap(cState);
 
-		if (cState->gameFlag == GAME_PLAYING) {
-			// ゲームプレイ中
+		if (cState->gameFlag == GAME_PLAYING) { // ゲームプレイ中
 			// esc
 			if (act == 0x1B) {
 				break;
 			}
 		}
-		else {
-			// ゲームクリアorゲームオーバー
+		else { // ゲームクリアorゲームオーバー
 			break;
 		}
 	}
