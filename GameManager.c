@@ -42,6 +42,7 @@ int GameManager_run(void) {
 		cState = nState; // ポインタ付け替え
 
 		//printf("(%d, %d)\n", cState->x, cState->y);
+		GameManager_outputMap(cState);
 
 		if (cState->gameFlag == GAME_PLAYING) {
 			// ゲームプレイ中
@@ -67,8 +68,31 @@ int GameManager_run(void) {
 }
 
 void GameManager_outputMap(State* s) {
-	//
-
+	for (int y = 0; y < MAPSIZEY; y++) {
+		for (int x = 0; x < MAPSIZEX; x++) {
+			// 描画の優先度に注意
+			if (s->y == y && s->x == x) {
+				printf("@ ");
+			}
+			else if (s->enemies[y][x] != -1) {
+				printf("$ ");
+			}
+			else if (s->map[y][x] == 2) {
+				printf("%% "); // %%で%出力
+			}
+			else if (s->map[y][x] == 0) {
+				printf(". ");
+			}
+			else if (s->map[y][x] == 1) {
+				printf("# ");
+			}
+			else {
+				printf("_ ");
+			}
+		}
+		printf("\n");
+	}
+	printf("\n");
 }
 
 

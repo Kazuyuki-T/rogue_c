@@ -10,5 +10,7 @@
 // public
 int GameManager_run(void);
 
+void GameManager_outputMap(State* s);
+
 
 #endif

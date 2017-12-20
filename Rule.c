@@ -74,8 +74,6 @@ State* Rule_getNextState(State* s, int act) {
 	// Stateの更新
 	//Rule_transition(&nextState, act);
 
-	actPlayerTest(&nextState, act);
-
 	// 
 	//printf("%d\n", act);
 
@@ -291,12 +289,6 @@ void Rule_transition(State *s, int act) {
 	}
 }
 
-void actPlayerTest(State *s, int act) {
-	int dir = Rule_convertActtoDir(act);
-	s->x += diffX[dir];
-	s->y += diffY[dir];
-}
-
 int Rule_actPlayer(State *s, int act) {
 	// a:Arrow or a:Staff -> 数字入力
 	// 1~9 or f:Food or p:Potion -> 直接行動
@@ -415,52 +407,7 @@ int Rule_countSetableObjGridNum(State *s) {
 	return count;
 }
 
-int Rule_transition(State *currentState, int act) {
-	// 遷移
 
-	// escのとき
-	if (act == 0x1b)	return GAME_PLAYING;
-
-	int playerAction = Rule_actionPlayer(currentState, act);
-	if (playerAction == SUCCESS) {
-		// プレイヤが行動したならば，敵を動かす
-		
-
-		// ここで行うべきか？別の部分でまとめて行うべきでは？
-		// map上の敵の座標を更新
-		Rule_updateEnemyMap(currentState);
-		// プレイヤから見えている範囲を更新
-		Rule_updateSeemArea(currentState);
-
-
-		// enemy
-		Rule_actionEnemy(currentState);
-
-		return GAME_PLAYING;
-	}
-	else if (playerAction == FAILURE) {
-		// プレイヤが行動しないとき
-
-		return GAME_PLAYING;
-	}
-	else if (playerAction == NEXTFLR){
-		// プレイヤの階層が変化したとき
-		currentState->flr++;
-		if (currentState->flr == TOPFLR) {
-			// 最上階到達 -> ゲームクリア
-			return GAME_CLEAR;
-		}
-		else {
-			// 途中 -> 新しい状況の生成
-			Rule_setStateInfo(currentState, FALSE);
-			return GAME_PLAYING;
-		}
-	}
-	else {
-		// playerAction == ???
-		return GAME_PLAYING;
-	}
-}
 
 void Rule_setStateInfo(State *s, int initFalg) {
 	// obj配置できる床の数

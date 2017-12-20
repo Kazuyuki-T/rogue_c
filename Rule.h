@@ -49,6 +49,10 @@ void Rule_copyState(State* cs, State* ns);
 
 void actPlayerTest(State *s, int act);
 
+int Rule_actPlayer(State *s, int act);
+
+void Rule_transition(State *s, int act);
+
 
 // public，Stateの情報のセット，map，obj配置
 void Rule_setStateInfo(State *s, int initFlag);
@@ -80,8 +84,7 @@ void Rule_updateEnemyMap(State *s);
 //
 void Rule_updateSeemArea(State *s);
 
-// public
-int Rule_transition(State *currentState, int act);
+
 
 // private
 int Rule_actionPlayer(State *currentState, int act);
