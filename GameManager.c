@@ -1,4 +1,5 @@
 ﻿#include <stdio.h>
+#include <stdlib.h>
 #include "GameManager.h"
 
 //#define DEBUG
@@ -66,6 +67,7 @@ int GameManager_run(void) {
 }
 
 void GameManager_outputMap(State* s) {
+	system("cls");
 	for (int y = 0; y < MAPSIZEY; y++) {
 		for (int x = 0; x < MAPSIZEX; x++) {
 			// 描画の優先度に注意

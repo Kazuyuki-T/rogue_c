@@ -111,19 +111,19 @@ void Rule_setStateInfo(State *s, int initFalg) {
 	// 最大数（マップのサイズ）が判明しているため，カーソルによる線形リストでも良いかもしれない
 
 	// マップの作製->obj配置できる床の数
-	int roomGridNum = Rule_setState_setMap(s);
+	int roomGridNum = Rule_setMap(s);
 	// 階段
-	Rule_setState_setStair(s, &roomGridNum);
+	Rule_setStair(s, &roomGridNum);
 	// アイテム
-	Rule_setState_setItem(s, &roomGridNum);
+	Rule_setItem(s, &roomGridNum);
 	// プレイヤ
-	Rule_setState_setPlayer(s, &roomGridNum);
+	Rule_setPlayer(s, &roomGridNum);
 	// プレイヤの初期化を行うか否か
 	// ゲームの初期化の際には行う
 	// フロアの変更の際には行わない
 	if (initFalg == TRUE)	Rule_initPlayer(s);
 	// 敵
-	Rule_setState_setEnemy(s, &roomGridNum);
+	Rule_setEnemy(s, &roomGridNum);
 
 	// map上の敵の座標を更新
 	Rule_updateEnemyMap(s);
@@ -177,7 +177,7 @@ void Rule_setItem(State *s, int* gridnum) {
 void Rule_setEnemy(State *s, int* gridnum) {
 	// 順番に生成
 	for (int en = 0; en < ENEMYNUMBER; en++) {
-		Rule_setState_setEachEnemy(s, gridnum, en);
+		Rule_setEachEnemy(s, gridnum, en);
 	}
 }
 
@@ -236,7 +236,7 @@ State* Rule_getNextState(State* s, int act) {
 	// Stateの複製
 	Rule_copyState(s, &nextState);
 	// Stateの更新
-	Rule_transition(&nextState, act);
+	Rule_transitState(&nextState, act);
 
 	// 
 	//printf("%d\n", act);
