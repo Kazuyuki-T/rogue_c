@@ -33,6 +33,7 @@ int GameManager_run(void) {
 
 	//printf("(%d, %d)\n", cState->x, cState->y);
 	GameManager_outputMap(cState);
+	GameManager_outputPlayerInfo(cState);
 
 	///////////////
 	// main loop //
@@ -44,6 +45,7 @@ int GameManager_run(void) {
 
 		//printf("(%d, %d)\n", cState->x, cState->y);
 		GameManager_outputMap(cState);
+		GameManager_outputPlayerInfo(cState);
 
 		if (cState->gameFlag == GAME_PLAYING) { // ゲームプレイ中
 			// esc
@@ -58,7 +60,6 @@ int GameManager_run(void) {
 
 	int result = cState->gameFlag;
 	Rule_finish();
-	printf("test");
 	return result;
 
 	#ifdef DEBUG
@@ -68,6 +69,7 @@ int GameManager_run(void) {
 
 void GameManager_outputMap(State* s) {
 	system("cls");
+	//gotoxy(1,1);
 	for (int y = 0; y < MAPSIZEY; y++) {
 		for (int x = 0; x < MAPSIZEX; x++) {
 			// 描画の優先度に注意
@@ -92,6 +94,25 @@ void GameManager_outputMap(State* s) {
 		}
 		printf("\n");
 	}
+	printf("\n");
+}
+
+void GameManager_outputPlayerInfo(State* s) {
+	printf("flr:%d, ", s->flr);
+	printf("turn:%d, ", s->gameTurn);
+	printf("(%d, %d), ", s->x, s->y);
+	printf("\n");
+	
+	printf("Hp/maxHp:%d/%d, ", s->hp, s->mhp);
+	printf("stm:%d, ", s->stm);
+	printf("lv:%d, ", s->lv);
+	printf("exp:%d, ", s->exp);
+	printf("\n");
+	
+	printf("pt:%d, ", s->pt);
+	printf("fd:%d, ", s->fd);
+	printf("ar:%d, ", s->ar);
+	printf("st:%d, ", s->st);
 	printf("\n");
 }
 

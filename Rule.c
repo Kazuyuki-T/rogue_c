@@ -37,8 +37,8 @@ void Rule_makeArray(State* s) {
 	Rule_makeMapArray(&(s->map), MAPSIZEX, MAPSIZEY, -1);
 	Rule_makeMapArray(&(s->seem), MAPSIZEX, MAPSIZEY, -1);
 	Rule_makeMapArray(&(s->enemies), MAPSIZEX, MAPSIZEY, -1);
-	Rule_makeEnemyArray(&(s->killedEnemyTurn), ENEMYNUMBER, 0);
-	Rule_makeEnemyStArray(&(s->enemiesSt), ENEMYNUMBER);
+	Rule_makeEnemyArray(&(s->killedEnemyTurn), ENEMY_NUMBER, 0);
+	Rule_makeEnemyStArray(&(s->enemiesSt), ENEMY_NUMBER);
 }
 
 void Rule_freeArray(State* s) {
@@ -176,7 +176,7 @@ void Rule_setItem(State *s, int* gridnum) {
 
 void Rule_setEnemy(State *s, int* gridnum) {
 	// 順番に生成
-	for (int en = 0; en < ENEMYNUMBER; en++) {
+	for (int en = 0; en < ENEMY_NUMBER; en++) {
 		Rule_setEachEnemy(s, gridnum, en);
 	}
 }
@@ -226,8 +226,16 @@ void Rule_setPlayer(State *s, int* gridnum) {
 }
 
 void Rule_initPlayer(State *s) {
-	s->mhp = 100;
+	s->mhp = PLAYER_MAXHP;
 	s->hp = s->mhp;
+	s->stm = PLAYER_STM;
+	s->lv = 0;
+	s->exp = 0;
+
+	s->pt = 0;
+	s->fd = 0;
+	s->ar = 0;
+	s->st = 0;
 }
 
 State* Rule_getNextState(State* s, int act) {
@@ -237,9 +245,6 @@ State* Rule_getNextState(State* s, int act) {
 	Rule_copyState(s, &nextState);
 	// Stateの更新
 	Rule_transitState(&nextState, act);
-
-	// 
-	//printf("%d\n", act);
 
 	return &nextState;
 }
@@ -265,8 +270,9 @@ void Rule_transitState(State *s, int act) {
 
 
 			// enemy
-			//Rule_actionEnemy(s);
+			Rule_actEnemy(s);
 
+			s->gameTurn++;
 			s->gameFlag = GAME_PLAYING;
 		}
 		else if (playerAction == FAILURE) {
@@ -284,6 +290,7 @@ void Rule_transitState(State *s, int act) {
 			else {
 				// 途中 -> 新しい状況の生成
 				Rule_setStateInfo(s, FALSE);
+				s->gameTurn++;
 				s->gameFlag = GAME_PLAYING;
 			}
 		}
@@ -386,36 +393,58 @@ int Rule_actPlayer(State *s, int act) {
 	return SUCCESS;
 }
 
-int Rule_judgeCollision(State *currentState, int nx, int ny) {
-	for (int en = 0; en < ENEMYNUMBER; en++) {
-		if (currentState->enemiesSt[en].x == nx && currentState->enemiesSt[en].y == ny && currentState->enemiesSt[en].active == TRUE) {
+int Rule_judgeCollision(State *s, int nx, int ny) {
+	for (int en = 0; en < ENEMY_NUMBER; en++) {
+		if (s->enemiesSt[en].x == nx && s->enemiesSt[en].y == ny && s->enemiesSt[en].active == TRUE) {
 			return en;
 		}
 	}
 	return -1;
 }
 
-void Rule_atkPlayer(State *currentState, int en, int atkDamage) {
-	if (currentState->enemiesSt[en].hp - atkDamage <= 0) {
+void Rule_atkPlayer(State *s, int en, int atkDamage) {
+	if (s->enemiesSt[en].hp - atkDamage <= 0) {
 		// 敵の死亡処理
-		currentState->enemiesSt[en].hp = 0;
-		currentState->enemiesSt[en].active = FALSE;
+		s->enemiesSt[en].hp = 0;
+		s->enemiesSt[en].active = FALSE;
 
 		// 敵の再復活までのターンを設定
+		s->killedEnemyTurn[en] = ENEMY_REVTURN;
 
 		// プレイヤに経験値を追加
 
+
 	}
 	else {
-		currentState->enemiesSt[en].hp -= atkDamage;
+		s->enemiesSt[en].hp -= atkDamage;
 	}
 }
 
-void Rule_actionEnemy(State *currentState) {
-	// enemyのアクション
+void Rule_actEnemy(State *s) {
+	// 順番に行動
+	for (int en = 0; en < ENEMY_NUMBER; en++) {
+		Rule_actEachEnemy(s, en);
+	}
+}
 
-	// enemymapの更新
+void Rule_actEachEnemy(State *s, int en) {
+	// 行動の選択
+	if (s->enemiesSt[en].active == TRUE) {
+		// 生きているとき
 
+	}
+	else {
+		// 死んでいるとき
+		if (s->killedEnemyTurn[en] != 0) {
+			s->killedEnemyTurn[en]--;
+		}
+		else {
+			// 敵を復活
+		}
+	}
+	
+	// 行動したとき -> enemymapの更新
+	Rule_updateEnemyMap(s);
 }
 
 void Rule_updateEnemyMap(State *s) {
@@ -427,7 +456,7 @@ void Rule_updateEnemyMap(State *s) {
 
 	// 敵のいる座標：敵ID
 	// その他：-1
-	for (int en = 0; en < ENEMYNUMBER; en++) {
+	for (int en = 0; en < ENEMY_NUMBER; en++) {
 		if (s->enemiesSt[en].active == TRUE) {
 			int x = s->enemiesSt[en].x;
 			int y = s->enemiesSt[en].y;
@@ -501,7 +530,7 @@ void Rule_copyState(State* cs, State* ns) {
 			ns->enemies[y][x] = cs->enemies[y][x];
 		}
 	}
-	for (int en = 0; en < ENEMYNUMBER; en++) {
+	for (int en = 0; en < ENEMY_NUMBER; en++) {
 		ns->killedEnemyTurn[en] = cs->killedEnemyTurn[en];
 		ns->enemiesSt[en].hp = cs->enemiesSt[en].hp;
 		ns->enemiesSt[en].mhp = cs->enemiesSt[en].mhp;

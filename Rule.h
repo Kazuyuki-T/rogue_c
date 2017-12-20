@@ -7,17 +7,16 @@
 
 #define MAPSIZEX 10
 #define MAPSIZEY 10
-#define ENEMYNUMBER 4
+#define ENEMY_NUMBER 4
+#define ENEMY_REVTURN 50
 #define TOPFLR 4
+#define PLAYER_MAXHP 100
+#define PLAYER_STM 100
 
 // actionPlayerからの戻り値
 #define SUCCESS 1
 #define FAILURE 0
 #define NEXTFLR 2
-
-//#define GAME_CLEAR 1
-//#define GAME_OVER 2
-//#define GAME_PLAYING 0
 
 typedef struct {
 	int testRule;
@@ -76,7 +75,8 @@ int Rule_judgeCollision(State *currentState, int nx, int ny);
 void Rule_atkPlayer(State *currentState, int en, int atkDamage);
 
 // 敵の行動
-void Rule_actionEnemy(State *currentState);
+void Rule_actEnemy(State *currentState);
+void Rule_actEachEnemy(State *currentState, int en);
 
 // 敵の配置の更新
 void Rule_updateEnemyMap(State *s);

@@ -14,4 +14,7 @@ int GameManager_run(void);
 void GameManager_outputMap(State* s);
 
 
+void GameManager_outputPlayerInfo(State* s);
+
+
 #endif
