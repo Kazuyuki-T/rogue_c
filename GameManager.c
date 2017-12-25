@@ -28,10 +28,11 @@ int GameManager_run(void) {
 	printf("Game start\n");
 	#endif // DEBUG
 
-	State* cState = Rule_init();
-	State* nState;
+	// 現在・次状態を表すStateの
+	State* cState = Rule_init(); // 現在のStateの初期化
+	State* nState; // 次のStateを用意，配列確保等
 
-	//printf("(%d, %d)\n", cState->x, cState->y);
+	// テスト出力用
 	GameManager_outputMap(cState);
 	GameManager_outputPlayerInfo(cState);
 
@@ -43,7 +44,6 @@ int GameManager_run(void) {
 		nState = Rule_getNextState(cState, act);
 		cState = nState; // ポインタ付け替え
 
-		//printf("(%d, %d)\n", cState->x, cState->y);
 		GameManager_outputMap(cState);
 		GameManager_outputPlayerInfo(cState);
 
@@ -59,7 +59,7 @@ int GameManager_run(void) {
 	}
 
 	int result = cState->gameFlag;
-	Rule_finish();
+	Rule_destroy();
 	return result;
 
 	#ifdef DEBUG
@@ -69,7 +69,7 @@ int GameManager_run(void) {
 
 void GameManager_outputMap(State* s) {
 	system("cls");
-	//gotoxy(1,1);
+	//gotoxy(1,1); // conio.hの関数，windows環境では使えない？
 	for (int y = 0; y < MAPSIZEY; y++) {
 		for (int x = 0; x < MAPSIZEX; x++) {
 			// 描画の優先度に注意

@@ -5,19 +5,6 @@
 #include <stdio.h>
 #include "State.h"
 
-typedef struct {
-	int testPlayer;
-} Player;
-
-// public
-void Player_init(Player *thisPlayer);
-
-// public
-void Player_finish(Player *thisPlayer);
-
-// public
-int Player_getAction(Player *thisPlayer, State *currentState);
-
 int Player_decideAction(State* s);
 
 #endif

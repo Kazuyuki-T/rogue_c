@@ -14,8 +14,8 @@ State* Rule_init(void) {
 	srand((unsigned int)time(NULL));
 	//srand(0);
 
-	Rule_makeArray(&currentState);
-	Rule_makeArray(&nextState);
+	Rule_makeArrays(&currentState);
+	Rule_makeArrays(&nextState);
 
 	// obj配置できる床の数
 	// この部分は連結リストで用意し，必要に応じて追加・削除したほうが良いか？
@@ -27,30 +27,21 @@ State* Rule_init(void) {
 	return &currentState;
 }
 
-void Rule_finish() {
-	Rule_freeArray(&currentState);
-	Rule_freeArray(&nextState);
+void Rule_destroy() {
+	Rule_removeArrays(&currentState);
+	Rule_removeArrays(&nextState);
 }
 
-void Rule_makeArray(State* s) {
+void Rule_makeArrays(State* s) {
 	// 配列の動的確保
-	Rule_makeMapArray(&(s->map), MAPSIZEX, MAPSIZEY, -1);
-	Rule_makeMapArray(&(s->seem), MAPSIZEX, MAPSIZEY, -1);
-	Rule_makeMapArray(&(s->enemies), MAPSIZEX, MAPSIZEY, -1);
-	Rule_makeEnemyArray(&(s->killedEnemyTurn), ENEMY_NUMBER, 0);
-	Rule_makeEnemyStArray(&(s->enemiesSt), ENEMY_NUMBER);
+	Rule_reserveMapArray(&(s->map), MAPSIZEX, MAPSIZEY, -1);
+	Rule_reserveMapArray(&(s->seem), MAPSIZEX, MAPSIZEY, -1);
+	Rule_reserveMapArray(&(s->enemies), MAPSIZEX, MAPSIZEY, -1);
+	Rule_reserveEnemyArray(&(s->killedEnemyTurn), ENEMY_NUMBER, 0);
+	Rule_reserveEnemyStArray(&(s->enemiesSt), ENEMY_NUMBER);
 }
 
-void Rule_freeArray(State* s) {
-	// 動的確保した配列の解放
-	Rule_removeMapArray(&(s->map), MAPSIZEY);
-	Rule_removeMapArray(&(s->seem), MAPSIZEY);
-	Rule_removeMapArray(&(s->enemies), MAPSIZEY);
-	Rule_removeEnemyArray(&(s->killedEnemyTurn));
-	Rule_removeEnemyStArray(&(s->enemiesSt));
-}
-
-void Rule_makeMapArray(int ***mapArray, int lengthX, int lengthY, int initVal) {
+void Rule_reserveMapArray(int ***mapArray, int lengthX, int lengthY, int initVal) {
 	*mapArray = (int**)malloc(sizeof(int) * lengthY);
 	if (*mapArray == NULL) exit(1);
 
@@ -67,14 +58,7 @@ void Rule_makeMapArray(int ***mapArray, int lengthX, int lengthY, int initVal) {
 	}
 }
 
-void Rule_removeMapArray(int ***mapArray, int lengthY) {
-	for (int y = 0; y < lengthY; y++) {
-		free((*mapArray)[y]);
-	}
-	free(*mapArray);
-}
-
-void Rule_makeEnemyArray(int **enemyArray, int enemyLength, int initVal) {
+void Rule_reserveEnemyArray(int **enemyArray, int enemyLength, int initVal) {
 	*enemyArray = (int*)malloc(sizeof(int) * enemyLength);
 	if (*enemyArray == NULL) exit(1);
 
@@ -84,11 +68,7 @@ void Rule_makeEnemyArray(int **enemyArray, int enemyLength, int initVal) {
 	}
 }
 
-void Rule_removeEnemyArray(int **enemyArray) {
-	free(*enemyArray);
-}
-
-void Rule_makeEnemyStArray(Enemy **enemyStArray, int enemyLength) {
+void Rule_reserveEnemyStArray(Enemy **enemyStArray, int enemyLength) {
 	*enemyStArray = (Enemy*)malloc(sizeof(Enemy) * enemyLength);
 	if (*enemyStArray == NULL) exit(1);
 
@@ -101,7 +81,27 @@ void Rule_makeEnemyStArray(Enemy **enemyStArray, int enemyLength) {
 	}
 }
 
-void Rule_removeEnemyStArray(Enemy **enemyStArray) {
+void Rule_removeArrays(State* s) {
+	// 動的確保した配列の解放
+	Rule_freeMapArray(&(s->map), MAPSIZEY);
+	Rule_freeMapArray(&(s->seem), MAPSIZEY);
+	Rule_freeMapArray(&(s->enemies), MAPSIZEY);
+	Rule_freeEnemyArray(&(s->killedEnemyTurn));
+	Rule_freeEnemyStArray(&(s->enemiesSt));
+}
+
+void Rule_freeMapArray(int ***mapArray, int lengthY) {
+	for (int y = 0; y < lengthY; y++) {
+		free((*mapArray)[y]);
+	}
+	free(*mapArray);
+}
+
+void Rule_freeEnemyArray(int **enemyArray) {
+	free(*enemyArray);
+}
+
+void Rule_freeEnemyStArray(Enemy **enemyStArray) {
 	free(*enemyStArray);
 }
 
@@ -115,7 +115,7 @@ void Rule_setStateInfo(State *s, int initFalg) {
 	// 階段
 	Rule_setStair(s, &roomGridNum);
 	// アイテム
-	Rule_setItem(s, &roomGridNum);
+	Rule_setItems(s, &roomGridNum);
 	// プレイヤ
 	Rule_setPlayer(s, &roomGridNum);
 	// プレイヤの初期化を行うか否か
@@ -123,7 +123,7 @@ void Rule_setStateInfo(State *s, int initFalg) {
 	// フロアの変更の際には行わない
 	if (initFalg == TRUE)	Rule_initPlayer(s);
 	// 敵
-	Rule_setEnemy(s, &roomGridNum);
+	Rule_setEnemies(s, &roomGridNum);
 
 	// map上の敵の座標を更新
 	Rule_updateEnemyMap(s);
@@ -170,11 +170,11 @@ void Rule_setStair(State *s, int* gridnum) {
 	}
 }
 
-void Rule_setItem(State *s, int* gridnum) {
+void Rule_setItems(State *s, int* gridnum) {
 
 }
 
-void Rule_setEnemy(State *s, int* gridnum) {
+void Rule_setEnemies(State *s, int* gridnum) {
 	// 順番に生成
 	for (int en = 0; en < ENEMY_NUMBER; en++) {
 		Rule_setEachEnemy(s, gridnum, en);
@@ -270,7 +270,7 @@ void Rule_transitState(State *s, int act) {
 
 
 			// enemy
-			Rule_actEnemy(s);
+			Rule_actEnemies(s);
 
 			s->gameTurn++;
 			s->gameFlag = GAME_PLAYING;
@@ -420,7 +420,7 @@ void Rule_atkPlayer(State *s, int en, int atkDamage) {
 	}
 }
 
-void Rule_actEnemy(State *s) {
+void Rule_actEnemies(State *s) {
 	// 順番に行動
 	for (int en = 0; en < ENEMY_NUMBER; en++) {
 		Rule_actEachEnemy(s, en);

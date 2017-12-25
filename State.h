@@ -22,20 +22,19 @@ typedef struct {
 
 typedef struct {
 	int testState;
+	
+	// 公開
 	int gameFlag;
-
-	// all OK
 	int gameTurn;
 	int flr;
 	int hp, mhp, stm, lv, exp;
 	int pt, fd, ar, st, itemNumber;
 	int x, y;
-	// NG or part of info
+	// 一部非公開
 	int **map;
 	int **seem;
 	int **enemies;
 	int *killedEnemyTurn;
-
 	Enemy* enemiesSt;
 } State;
 
