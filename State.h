@@ -18,6 +18,8 @@ typedef struct {
 	int active;
 	int hp, mhp;
 	int x, y;
+	int point;
+	int killedEnemyTurn;
 } Enemy;
 
 typedef struct {
@@ -34,7 +36,7 @@ typedef struct {
 	int **map;
 	int **seem;
 	int **enemies;
-	int *killedEnemyTurn;
+	//int *killedEnemyTurn;
 	Enemy* enemiesSt;
 } State;
 

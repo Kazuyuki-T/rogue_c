@@ -9,6 +9,8 @@
 #define MAPSIZEY 10
 #define ENEMY_NUMBER 4
 #define ENEMY_REVTURN 50
+#define ENEMY_MAXHP 50
+#define ENEMY_POINT 100
 #define TOPFLR 4
 #define PLAYER_MAXHP 100
 #define PLAYER_STM 100
@@ -40,13 +42,11 @@ void Rule_destroy(void);
 // 配列の動的確保
 void Rule_makeArrays(State* s);
 void Rule_reserveMapArray(int ***mapArray, int lengthX, int lengthY, int initVal);
-void Rule_reserveEnemyArray(int **enemyArray, int enemyLength, int initVal);
-void Rule_reserveEnemyStArray(Enemy **enemyStArray, int enemyLength);
+void Rule_reserveEnemyArray(Enemy **enemyStArray, int enemyLength);
 // 配列の解放
 void Rule_removeArrays(State* s);
 void Rule_freeMapArray(int ***mapArray, int lengthY);
-void Rule_freeEnemyArray(int **enemyArray);
-void Rule_freeEnemyStArray(Enemy **enemyStArray);
+void Rule_freeEnemyArray(Enemy **enemyStArray);
 
 // Stateの情報のセット，map，obj配置
 void Rule_setStateInfo(State *s, int initFlag);
@@ -70,7 +70,7 @@ void Rule_transitState(State *s, int act);
 int Rule_actPlayer(State *s, int act);
 
 // 敵との衝突判定
-int Rule_judgeCollision(State *s, int nx, int ny);
+int Rule_getOrDefaultCollidedEnemyIndex(State *s, int nx, int ny);
 
 // プレイヤの攻撃
 void Rule_atkPlayer(State *s, int en, int atkDamage);

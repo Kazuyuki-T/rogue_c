@@ -37,8 +37,7 @@ void Rule_makeArrays(State* s) {
 	Rule_reserveMapArray(&(s->map), MAPSIZEX, MAPSIZEY, -1);
 	Rule_reserveMapArray(&(s->seem), MAPSIZEX, MAPSIZEY, -1);
 	Rule_reserveMapArray(&(s->enemies), MAPSIZEX, MAPSIZEY, -1);
-	Rule_reserveEnemyArray(&(s->killedEnemyTurn), ENEMY_NUMBER, 0);
-	Rule_reserveEnemyStArray(&(s->enemiesSt), ENEMY_NUMBER);
+	Rule_reserveEnemyArray(&(s->enemiesSt), ENEMY_NUMBER);
 }
 
 void Rule_reserveMapArray(int ***mapArray, int lengthX, int lengthY, int initVal) {
@@ -58,17 +57,7 @@ void Rule_reserveMapArray(int ***mapArray, int lengthX, int lengthY, int initVal
 	}
 }
 
-void Rule_reserveEnemyArray(int **enemyArray, int enemyLength, int initVal) {
-	*enemyArray = (int*)malloc(sizeof(int) * enemyLength);
-	if (*enemyArray == NULL) exit(1);
-
-	// initValによる初期化
-	for (int e = 0; e < enemyLength; e++) {
-		(*enemyArray)[e] = initVal;
-	}
-}
-
-void Rule_reserveEnemyStArray(Enemy **enemyStArray, int enemyLength) {
+void Rule_reserveEnemyArray(Enemy **enemyStArray, int enemyLength) {
 	*enemyStArray = (Enemy*)malloc(sizeof(Enemy) * enemyLength);
 	if (*enemyStArray == NULL) exit(1);
 
@@ -76,8 +65,6 @@ void Rule_reserveEnemyStArray(Enemy **enemyStArray, int enemyLength) {
 	for (int e = 0; e < enemyLength; e++) {
 		(*enemyStArray)[e].id = e;
 		(*enemyStArray)[e].active = FALSE;
-		(*enemyStArray)[e].x = 0;
-		(*enemyStArray)[e].y = 0;
 	}
 }
 
@@ -86,8 +73,7 @@ void Rule_removeArrays(State* s) {
 	Rule_freeMapArray(&(s->map), MAPSIZEY);
 	Rule_freeMapArray(&(s->seem), MAPSIZEY);
 	Rule_freeMapArray(&(s->enemies), MAPSIZEY);
-	Rule_freeEnemyArray(&(s->killedEnemyTurn));
-	Rule_freeEnemyStArray(&(s->enemiesSt));
+	Rule_freeEnemyArray(&(s->enemiesSt));
 }
 
 void Rule_freeMapArray(int ***mapArray, int lengthY) {
@@ -97,11 +83,7 @@ void Rule_freeMapArray(int ***mapArray, int lengthY) {
 	free(*mapArray);
 }
 
-void Rule_freeEnemyArray(int **enemyArray) {
-	free(*enemyArray);
-}
-
-void Rule_freeEnemyStArray(Enemy **enemyStArray) {
+void Rule_freeEnemyArray(Enemy **enemyStArray) {
 	free(*enemyStArray);
 }
 
@@ -121,7 +103,9 @@ void Rule_setStateInfo(State *s, int initFalg) {
 	// プレイヤの初期化を行うか否か
 	// ゲームの初期化の際には行う
 	// フロアの変更の際には行わない
-	if (initFalg == TRUE)	Rule_initPlayer(s);
+	if (initFalg == TRUE) {
+		Rule_initPlayer(s);
+	}
 	// 敵
 	Rule_setEnemies(s, &roomGridNum);
 
@@ -195,8 +179,9 @@ void Rule_setEachEnemy(State *s, int* gridnum, int en) {
 					s->enemiesSt[en].x = x;
 					s->enemiesSt[en].y = y;
 					s->enemiesSt[en].active = TRUE;
-					s->enemiesSt[en].mhp = 50;
+					s->enemiesSt[en].mhp = ENEMY_MAXHP;
 					s->enemiesSt[en].hp = s->enemiesSt[en].mhp;
+					s->enemiesSt[en].point = ENEMY_POINT;
 					return;
 				}
 				count++;
@@ -272,7 +257,7 @@ void Rule_transitState(State *s, int act) {
 			// enemy
 			Rule_actEnemies(s);
 
-			s->gameTurn++;
+			(s->gameTurn)++;
 			s->gameFlag = GAME_PLAYING;
 		}
 		else if (playerAction == FAILURE) {
@@ -290,7 +275,7 @@ void Rule_transitState(State *s, int act) {
 			else {
 				// 途中 -> 新しい状況の生成
 				Rule_setStateInfo(s, FALSE);
-				s->gameTurn++;
+				(s->gameTurn)++;
 				s->gameFlag = GAME_PLAYING;
 			}
 		}
@@ -369,10 +354,10 @@ int Rule_actPlayer(State *s, int act) {
 		// 攻撃or待機or移動
 
 		// 敵との衝突判定
-		int nextEnemy = Rule_judgeCollision(s, nx, ny);
-		if (nextEnemy != -1) {
+		int nextEnemyIndex = Rule_getOrDefaultCollidedEnemyIndex(s, nx, ny);
+		if (nextEnemyIndex != -1) {
 			// 斜め攻撃判定 -> return
-			Rule_atkPlayer(s, nextEnemy, 10);
+			Rule_atkPlayer(s, nextEnemyIndex, 10);
 			printf("                                                 \r");
 			printf("atk.");
 			/*for (int en = 0; en < thisRule->enemyNumber; en++) {
@@ -393,7 +378,7 @@ int Rule_actPlayer(State *s, int act) {
 	return SUCCESS;
 }
 
-int Rule_judgeCollision(State *s, int nx, int ny) {
+int Rule_getOrDefaultCollidedEnemyIndex(State *s, int nx, int ny) {
 	for (int en = 0; en < ENEMY_NUMBER; en++) {
 		if (s->enemiesSt[en].x == nx && s->enemiesSt[en].y == ny && s->enemiesSt[en].active == TRUE) {
 			return en;
@@ -409,11 +394,12 @@ void Rule_atkPlayer(State *s, int en, int atkDamage) {
 		s->enemiesSt[en].active = FALSE;
 
 		// 敵の再復活までのターンを設定
-		s->killedEnemyTurn[en] = ENEMY_REVTURN;
+		s->enemiesSt[en].killedEnemyTurn = ENEMY_REVTURN;
 
 		// プレイヤに経験値を追加
-
-
+		s->exp += s->enemiesSt[en].point;
+		//(s->exp) += 100;
+		printf("%d\n", s->enemiesSt[en].point);
 	}
 	else {
 		s->enemiesSt[en].hp -= atkDamage;
@@ -435,8 +421,8 @@ void Rule_actEachEnemy(State *s, int en) {
 	}
 	else {
 		// 死んでいるとき
-		if (s->killedEnemyTurn[en] != 0) {
-			s->killedEnemyTurn[en]--;
+		if (s->enemiesSt[en].killedEnemyTurn > 0) {
+			s->enemiesSt[en].killedEnemyTurn--;
 		}
 		else {
 			// 敵を復活
@@ -531,13 +517,15 @@ void Rule_copyState(State* cs, State* ns) {
 		}
 	}
 	for (int en = 0; en < ENEMY_NUMBER; en++) {
-		ns->killedEnemyTurn[en] = cs->killedEnemyTurn[en];
 		ns->enemiesSt[en].hp = cs->enemiesSt[en].hp;
 		ns->enemiesSt[en].mhp = cs->enemiesSt[en].mhp;
 		ns->enemiesSt[en].id = cs->enemiesSt[en].id;
 		ns->enemiesSt[en].active = cs->enemiesSt[en].active;
 		ns->enemiesSt[en].x = cs->enemiesSt[en].x;
 		ns->enemiesSt[en].y = cs->enemiesSt[en].y;
+		ns->enemiesSt[en].point = cs->enemiesSt[en].point;
+		ns->enemiesSt[en].killedEnemyTurn = ns->enemiesSt[en].killedEnemyTurn;
+		
 		ns->enemiesSt[en].testEnemy = cs->enemiesSt[en].testEnemy;
 	}
 }

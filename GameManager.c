@@ -35,6 +35,7 @@ int GameManager_run(void) {
 	// テスト出力用
 	GameManager_outputMap(cState);
 	GameManager_outputPlayerInfo(cState);
+	GameManager_outputEnemiesInfo(cState);
 
 	///////////////
 	// main loop //
@@ -43,9 +44,10 @@ int GameManager_run(void) {
 		int act = Player_decideAction(cState);
 		nState = Rule_getNextState(cState, act);
 		cState = nState; // ポインタ付け替え
-
+		
 		GameManager_outputMap(cState);
 		GameManager_outputPlayerInfo(cState);
+		GameManager_outputEnemiesInfo(cState);
 
 		if (cState->gameFlag == GAME_PLAYING) { // ゲームプレイ中
 			// esc
@@ -116,4 +118,12 @@ void GameManager_outputPlayerInfo(State* s) {
 	printf("\n");
 }
 
-
+void GameManager_outputEnemiesInfo(State* s) {
+	for (int e = 0; e < ENEMY_NUMBER; e++) {
+		printf("%d : ", s->enemiesSt[e].id);
+		printf("(%d, %d), ", s->enemiesSt[e].x, s->enemiesSt[e].y);
+		printf("Hp/maxHp:%d/%d, ", s->enemiesSt[e].hp, s->enemiesSt[e].mhp);
+		printf("point:%d, ", s->enemiesSt[e].point);
+		printf("\n");
+	}
+}
