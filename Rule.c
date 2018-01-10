@@ -5,6 +5,18 @@
 #include "Rule.h"
 
 
+// 定数
+#define MAPSIZEX 10
+#define MAPSIZEY 10
+#define ENEMY_NUMBER 4
+#define ENEMY_REVTURN 50
+#define ENEMY_MAXHP 50
+#define ENEMY_POINT 100
+#define TOPFLR 4
+#define PLAYER_MAXHP 100
+#define PLAYER_STM 100
+
+// 周囲8方向の差分
 const int diffX[9] = { -1, 0, 1,-1, 0, 1,-1, 0, 1 };
 const int diffY[9] = {  1, 1, 1, 0, 0, 0,-1,-1,-1 };
 
@@ -29,12 +41,6 @@ typedef struct {
 	int topFlr;
 } Rule;
 
-// 初期化関数
-//State* Rule_init(void);
-
-// 終了関数，動的確保配列の解放
-//void Rule_destroy(void);
-
 // 配列の動的確保
 void Rule_makeArrays(State* s);
 void Rule_reserveMapArray(int ***mapArray, int lengthX, int lengthY, int initVal);
@@ -55,9 +61,6 @@ void Rule_setPlayer(State *s, int* gridnum);
 
 // プレイヤの初期化
 void Rule_initPlayer(State *s);
-
-// 状態+行動->新しい状態
-//State* Rule_getNextState(State* s, int act);
 
 // 状態遷移の流れ
 void Rule_transitState(State *s, int act);
@@ -89,6 +92,7 @@ void Rule_copyState(State* cs, State* ns);
 
 // min<=randval<=max
 int Rule_getRandom(int min, int max);
+
 
 State* Rule_init(void) {
 	srand((unsigned int)time(NULL));
@@ -615,4 +619,15 @@ int Rule_getRandom(int min, int max)
 	return min + (int)(rand()*(max - min + 1.0) / (1.0 + RAND_MAX));
 }
 
+int Rule_getMapSizeX(void) {
+	return MAPSIZEX;
+}
+
+int Rule_getMapSizeY(void) {
+	return MAPSIZEY;
+}
+
+int Rule_getEnemyNum(void) {
+	return ENEMY_NUMBER;
+}
 

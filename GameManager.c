@@ -9,9 +9,9 @@
 int GameManager_run(void);
 // 出力
 void GameManager_outputMap(State* s);
-//
+// 出力
 void GameManager_outputPlayerInfo(State* s);
-//
+// 出力
 void GameManager_outputEnemiesInfo(State* s);
 
 
@@ -86,8 +86,11 @@ int GameManager_run(void) {
 void GameManager_outputMap(State* s) {
 	system("cls");
 	//gotoxy(1,1); // conio.hの関数，windows環境では使えない？
-	for (int y = 0; y < MAPSIZEY; y++) {
-		for (int x = 0; x < MAPSIZEX; x++) {
+	
+	int mx = Rule_getMapSizeX();
+	int my = Rule_getMapSizeY();
+	for (int y = 0; y < my; y++) {
+		for (int x = 0; x < mx; x++) {
 			// 描画の優先度に注意
 			if (s->y == y && s->x == x) {
 				printf("@ ");
@@ -133,7 +136,8 @@ void GameManager_outputPlayerInfo(State* s) {
 }
 
 void GameManager_outputEnemiesInfo(State* s) {
-	for (int e = 0; e < ENEMY_NUMBER; e++) {
+	int en = Rule_getEnemyNum();
+	for (int e = 0; e < en; e++) {
 		printf("%d : ", s->enemiesSt[e].id);
 		printf("(%d, %d), ", s->enemiesSt[e].x, s->enemiesSt[e].y);
 		printf("Hp/maxHp:%d/%d, ", s->enemiesSt[e].hp, s->enemiesSt[e].mhp);
