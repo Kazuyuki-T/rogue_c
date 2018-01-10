@@ -36,7 +36,6 @@ typedef struct {
 	int **map;
 	int **seem;
 	int **enemies;
-	//int *killedEnemyTurn;
 	Enemy* enemiesSt;
 } State;
 
