@@ -5,17 +5,16 @@
 #include "State.h"
 #include "Player.h"
 
-// 1ゲームの実行，戻り値が勝敗
-int GameManager_run(void);
-// 出力
-void GameManager_outputMap(State* s);
-// 出力
-void GameManager_outputPlayerInfo(State* s);
-// 出力
-void GameManager_outputEnemiesInfo(State* s);
-
 
 //#define DEBUG
+
+// 1ゲームの実行，戻り値が勝敗
+int GameManager_run(void);
+
+// 出力
+void GameManager_outputMap(State* s, int n);
+void GameManager_outputPlayerInfo(State* s);
+void GameManager_outputEnemiesInfo(State* s);
 
 
 int main(void)
@@ -47,7 +46,8 @@ int GameManager_run(void) {
 	State* nState; // 次のStateを用意，配列確保等
 
 	// テスト出力用
-	GameManager_outputMap(cState);
+	GameManager_outputMap(cState, 0);
+	GameManager_outputMap(cState, 1);
 	GameManager_outputPlayerInfo(cState);
 	GameManager_outputEnemiesInfo(cState);
 
@@ -59,7 +59,8 @@ int GameManager_run(void) {
 		nState = Rule_getNextState(cState, act);
 		cState = nState; // ポインタ付け替え
 		
-		GameManager_outputMap(cState);
+		GameManager_outputMap(cState, 0);
+		GameManager_outputMap(cState, 1);
 		GameManager_outputPlayerInfo(cState);
 		GameManager_outputEnemiesInfo(cState);
 
@@ -74,50 +75,62 @@ int GameManager_run(void) {
 		}
 	}
 
-	int result = cState->gameFlag;
-	Rule_destroy();
-	return result;
-
 	#ifdef DEBUG
 	printf("Game end\n");
 	#endif // DEBUG
+
+	int result = cState->gameFlag;
+	Rule_destroy();
+	return result;
 }
 
-void GameManager_outputMap(State* s) {
-	system("cls");
-	//gotoxy(1,1); // conio.hの関数，windows環境では使えない？
-	
+void GameManager_outputMap(State* s, int n) {
 	int mx = Rule_getMapSizeX();
 	int my = Rule_getMapSizeY();
-	for (int y = 0; y < my; y++) {
-		for (int x = 0; x < mx; x++) {
-			// 描画の優先度に注意
-			if (s->y == y && s->x == x) {
-				printf("@ ");
+
+	if (n == 0) {
+		system("cls");
+		//gotoxy(1,1); // conio.hの関数，windows環境では使えない？
+		
+		for (int y = 0; y < my; y++) {
+			for (int x = 0; x < mx; x++) {
+				// 描画の優先度に注意
+				if (s->y == y && s->x == x) {
+					printf("@ ");
+				}
+				else if (s->enemies[y][x] != -1) {
+					printf("$ ");
+				}
+				else if (s->map[y][x] == 2) {
+					printf("%% "); // %%で%出力
+				}
+				else if (s->map[y][x] == 0) {
+					printf(". ");
+				}
+				else if (s->map[y][x] == 1) {
+					printf("# ");
+				}
+				else {
+					printf("_ ");
+				}
 			}
-			else if (s->enemies[y][x] != -1) {
-				printf("$ ");
-			}
-			else if (s->map[y][x] == 2) {
-				printf("%% "); // %%で%出力
-			}
-			else if (s->map[y][x] == 0) {
-				printf(". ");
-			}
-			else if (s->map[y][x] == 1) {
-				printf("# ");
-			}
-			else {
-				printf("_ ");
-			}
+			printf("\n");
 		}
 		printf("\n");
 	}
-	printf("\n");
+	else if (n == 1) {
+		for (int y = 0; y < my; y++) {
+			for (int x = 0; x < mx; x++) {
+				printf("%2d", s->enemies[y][x]);
+			}
+			printf("\n");
+		}
+		printf("\n");
+	}
 }
 
 void GameManager_outputPlayerInfo(State* s) {
-	printf("flr:%d, ", s->flr);
+	printf("flrNum:%d, ", s->flrNum);
 	printf("turn:%d, ", s->gameTurn);
 	printf("(%d, %d), ", s->x, s->y);
 	printf("\n");
@@ -142,6 +155,7 @@ void GameManager_outputEnemiesInfo(State* s) {
 		printf("(%d, %d), ", s->enemiesSt[e].x, s->enemiesSt[e].y);
 		printf("Hp/maxHp:%d/%d, ", s->enemiesSt[e].hp, s->enemiesSt[e].mhp);
 		printf("point:%d, ", s->enemiesSt[e].point);
+		printf("ket:%d, ", s->enemiesSt[e].killedEnemyTurn);
 		printf("\n");
 	}
 }

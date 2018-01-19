@@ -6,8 +6,8 @@
 
 
 // 定数
-#define MAPSIZEX 10
-#define MAPSIZEY 10
+#define MAPSIZEX 20
+#define MAPSIZEY 20
 #define ENEMY_NUMBER 4
 #define ENEMY_REVTURN 50
 #define ENEMY_MAXHP 50
@@ -16,17 +16,20 @@
 #define PLAYER_MAXHP 100
 #define PLAYER_STM 100
 
-// 周囲8方向の差分
-const int diffX[9] = { -1, 0, 1,-1, 0, 1,-1, 0, 1 };
-const int diffY[9] = {  1, 1, 1, 0, 0, 0,-1,-1,-1 };
-
-State currentState;
-State nextState;
-
 // actionPlayerからの戻り値
 #define SUCCESS 1
 #define FAILURE 0
 #define NEXTFLR 2
+
+// 周囲8方向から求めるxy差分
+const int diffX[9] = { -1, 0, 1,-1, 0, 1,-1, 0, 1 };
+const int diffY[9] = {  1, 1, 1, 0, 0, 0,-1,-1,-1 };
+// xy差分から求める周囲8方向
+// 使用時には差分 -1~1 -> 0~2 に変換
+const int dirNum[3][3] = { {6, 7, 8}, {3, 4, 5}, {0 ,1, 2} };
+
+State currentState;
+State nextState;
 
 typedef struct {
 	int testRule;
@@ -49,7 +52,6 @@ void Rule_reserveEnemyArray(Enemy **enemyStArray, int enemyLength);
 void Rule_removeArrays(State* s);
 void Rule_freeMapArray(int ***mapArray, int lengthY);
 void Rule_freeEnemyArray(Enemy **enemyStArray);
-
 // Stateの情報のセット，map，obj配置
 void Rule_setStateInfo(State *s, int initFlag);
 int Rule_setMap(State *s);
@@ -58,40 +60,39 @@ void Rule_setItems(State *s, int* gridnum);
 void Rule_setEnemies(State *s, int* gridnum);
 void Rule_setEachEnemy(State *s, int* gridnum, int en);
 void Rule_setPlayer(State *s, int* gridnum);
-
 // プレイヤの初期化
 void Rule_initPlayer(State *s);
-
 // 状態遷移の流れ
 void Rule_transitState(State *s, int act);
-
 // プレイヤの行動判定
-int Rule_actPlayer(State *s, int act);
-
+int Rule_canActPlayer(State *s, int act);
 // 敵との衝突判定
 int Rule_getOrDefaultCollidedEnemyIndex(State *s, int nx, int ny);
-
 // プレイヤの攻撃
 void Rule_atkPlayer(State *s, int en, int atkDamage);
-
 // 敵の行動
 void Rule_actEnemies(State *s);
 void Rule_actEachEnemy(State *s, int en);
-
 // 敵の配置の更新
 void Rule_updateEnemyMap(State *s);
-
 // プレイヤの視界の更新
 void Rule_updateSeemArea(State *s);
-
 // act1~9 -> dir0~8
 int Rule_convertActtoDir(int act);
-
 // コピー，csの内容をnsにコピー
 void Rule_copyState(State* cs, State* ns);
-
 // min<=randval<=max
 int Rule_getRandom(int min, int max);
+
+
+int Rule_hasPlayerPosition(State *s, int en);
+int Rule_canAttackPlayer(State *s, int en);
+
+int Rule_canMoveUnit(State *s, int nx, int ny);
+
+int Rule_convRangeM1to1(int);
+
+
 
 
 State* Rule_init(void) {
@@ -111,7 +112,7 @@ State* Rule_init(void) {
 	return &currentState;
 }
 
-void Rule_destroy() {
+void Rule_destroy(void) {
 	Rule_removeArrays(&currentState);
 	Rule_removeArrays(&nextState);
 }
@@ -171,7 +172,7 @@ void Rule_freeEnemyArray(Enemy **enemyStArray) {
 	free(*enemyStArray);
 }
 
-void Rule_setStateInfo(State *s, int initFalg) {
+void Rule_setStateInfo(State *s, int playerInitFalg) {
 	// obj配置できる床の数
 	// この部分は連結リストで用意し，必要に応じて追加・削除したほうが良いか？
 	// 最大数（マップのサイズ）が判明しているため，カーソルによる線形リストでも良いかもしれない
@@ -187,7 +188,7 @@ void Rule_setStateInfo(State *s, int initFalg) {
 	// プレイヤの初期化を行うか否か
 	// ゲームの初期化の際には行う
 	// フロアの変更の際には行わない
-	if (initFalg == TRUE) {
+	if (playerInitFalg == TRUE) {
 		Rule_initPlayer(s);
 	}
 	// 敵
@@ -198,6 +199,9 @@ void Rule_setStateInfo(State *s, int initFalg) {
 
 	// プレイヤから見えている範囲を更新
 	Rule_updateSeemArea(s);
+
+	// フラグを更新
+	s->flrResetFlag = FALSE;
 }
 
 int Rule_setMap(State *s) {
@@ -259,13 +263,14 @@ void Rule_setEachEnemy(State *s, int* gridnum, int en) {
 			if (s->map[y][x] == 0 && (s->x != x || s->y != y) && s->enemies[y][x] == -1) {
 				if (count == enemyPos) {
 					// 敵の初期座標の格納
-					s->enemies[y][x] = 1;
+					s->enemies[y][x] = s->enemiesSt[en].id;
 					s->enemiesSt[en].x = x;
 					s->enemiesSt[en].y = y;
 					s->enemiesSt[en].active = TRUE;
 					s->enemiesSt[en].mhp = ENEMY_MAXHP;
 					s->enemiesSt[en].hp = s->enemiesSt[en].mhp;
 					s->enemiesSt[en].point = ENEMY_POINT;
+					s->enemiesSt[en].killedEnemyTurn = 0;
 					return;
 				}
 				count++;
@@ -326,10 +331,12 @@ void Rule_transitState(State *s, int act) {
 		s->gameFlag = GAME_PLAYING;
 	}
 	else {
-		int playerAction = Rule_actPlayer(s, act);
-		if (playerAction == SUCCESS) {
+		int playerAction = Rule_canActPlayer(s, act);
+		if (playerAction == TRUE) {
 			// プレイヤが行動したならば，敵を動かす
 
+			// enemy
+			Rule_actEnemies(s);
 
 			// ここで行うべきか？別の部分でまとめて行うべきでは？
 			// map上の敵の座標を更新
@@ -337,22 +344,19 @@ void Rule_transitState(State *s, int act) {
 			// プレイヤから見えている範囲を更新
 			Rule_updateSeemArea(s);
 
-
-			// enemy
-			Rule_actEnemies(s);
-
 			(s->gameTurn)++;
 			s->gameFlag = GAME_PLAYING;
 		}
-		else if (playerAction == FAILURE) {
+		else{
 			// プレイヤが行動しないとき
-
 			s->gameFlag = GAME_PLAYING;
 		}
-		else if (playerAction == NEXTFLR) {
+		
+		// フロアの更新チェック
+		if (s->flrResetFlag == TRUE) {
 			// プレイヤの階層が変化したとき
-			s->flr++;
-			if (s->flr == TOPFLR) {
+			s->flrNum++;
+			if (s->flrNum == TOPFLR) {
 				// 最上階到達 -> ゲームクリア
 				s->gameFlag = GAME_CLEAR;
 			}
@@ -363,14 +367,10 @@ void Rule_transitState(State *s, int act) {
 				s->gameFlag = GAME_PLAYING;
 			}
 		}
-		else {
-			// playerAction == ???
-			s->gameFlag = GAME_PLAYING;
-		}
 	}
 }
 
-int Rule_actPlayer(State *s, int act) {
+int Rule_canActPlayer(State *s, int act) {
 	// a:Arrow or a:Staff -> 数字入力
 	// 1~9 or f:Food or p:Potion -> 直接行動
 	// ↑↓←→ -> 直接行動
@@ -396,7 +396,7 @@ int Rule_actPlayer(State *s, int act) {
 		else {
 			printf("                                                 \r");
 			printf("miss, ");
-			return FAILURE;
+			return FALSE;
 		}
 	}
 	// 食料 or ポーション
@@ -421,18 +421,10 @@ int Rule_actPlayer(State *s, int act) {
 		int nx = s->x + diffX[dir];
 		int ny = s->y + diffY[dir];
 
-		// マップの範囲外
-		if (ny < 0 || MAPSIZEY <= ny || nx < 0 || MAPSIZEX <= nx) {
-			return FAILURE;
+		// State, xy座標
+		if (Rule_canMoveUnit(s, nx, ny) == FALSE) {
+			return FALSE;
 		}
-		// 進入禁止部分
-		if (s->map[ny][nx] == 1) {
-			return FAILURE;
-		}
-		// 斜め移動チェック
-		//if (斜め攻撃の時) {
-		//	return FAILURE;
-		//}
 
 		// いずれにも当てはまらない->行動成功
 		// 攻撃or待機or移動
@@ -454,21 +446,50 @@ int Rule_actPlayer(State *s, int act) {
 
 			// 移動後の座標が階段だった場合
 			if (s->map[s->y][s->x] == 2) {
-				return NEXTFLR;
+				s->flrResetFlag = TRUE;
 			}
 		}
 	}
 
-	return SUCCESS;
+	return TRUE;
 }
 
+int Rule_canMoveUnit(State *s, int nx, int ny) {
+	// マップの範囲外
+	if (ny < 0 || MAPSIZEY <= ny || nx < 0 || MAPSIZEX <= nx) {
+		return FALSE;
+	}
+	// 進入禁止部分
+	if (s->map[ny][nx] == 1) {
+		return FALSE;
+	}
+	// 斜め移動チェック
+	//if (斜め移動の時) {
+	//	return FALSE;
+	//}
+
+	return TRUE;
+}
+
+// (State, unitNextX, unitNextY)
 int Rule_getOrDefaultCollidedEnemyIndex(State *s, int nx, int ny) {
 	for (int en = 0; en < ENEMY_NUMBER; en++) {
 		if (s->enemiesSt[en].x == nx && s->enemiesSt[en].y == ny && s->enemiesSt[en].active == TRUE) {
-			return en;
+			return s->enemiesSt[en].id;
 		}
 	}
 	return -1;
+}
+
+// (State, enemyNum)
+int Rule_isCollidedPlayer(State *s, int en) {
+	for(int dir = 0; dir < 9; dir++) {
+		// 周囲８マスにいるか
+		if (s->x == (s->enemiesSt[en].x + diffX[dir]) && s->y == (s->enemiesSt[en].y + diffY[dir])) {
+			return TRUE;
+		}
+	}
+	return FALSE;
 }
 
 void Rule_atkPlayer(State *s, int en, int atkDamage) {
@@ -497,24 +518,114 @@ void Rule_actEnemies(State *s) {
 	}
 }
 
+int Rule_convRangeM1to1(int dn) {
+	if (dn > 1) {
+		dn = 1;
+	}
+	else if(dn < -1) {
+		dn = -1;
+	}
+
+	return dn;
+}
+
 void Rule_actEachEnemy(State *s, int en) {
 	// 行動の選択
-	if (s->enemiesSt[en].active == TRUE) {
-		// 生きているとき
 
+	// 生きているとき
+	if (s->enemiesSt[en].active == TRUE) {
+		// プレイヤを確認できる
+		if (Rule_hasPlayerPosition(s, en) == TRUE) {
+			// 攻撃できる
+			if (Rule_canAttackPlayer(s, en) == TRUE) {
+
+			}
+			// 攻撃できない->最短距離で移動
+			else {
+				// enemy mapの座標初期化
+				s->enemies[s->enemiesSt[en].y][s->enemiesSt[en].x] = -1;
+				
+				int ndiffx = Rule_convRangeM1to1((s->x) - (s->enemiesSt[en].x));
+				int ndiffy = Rule_convRangeM1to1((s->y) - (s->enemiesSt[en].y));
+
+				// 差分から次の移動方向を決定
+				// (x, y) = (cx, cy) + (nx, ny)
+				int nx = (s->enemiesSt[en].x) + ndiffx;
+				int ny = (s->enemiesSt[en].y) + ndiffy;
+
+				// (x, y)に移動できる
+					// 移動
+				// (x, y)に移動できない
+					// (x, y)の左右２方向の座標確認
+					// 移動できる
+						// 移動
+					// 移動できない
+						// その場で待機
+
+
+				// 移動可能（mapの進行不可領域に侵入しない）で，敵同士の衝突なし
+				if (Rule_canMoveUnit(s, nx, ny) == TRUE && Rule_getOrDefaultCollidedEnemyIndex(s, nx, ny) == -1) {
+					s->enemiesSt[en].x = nx;
+					s->enemiesSt[en].y = ny;
+				}
+				else {
+
+				}
+
+				// map更新
+				s->enemies[s->enemiesSt[en].y][s->enemiesSt[en].x] = s->enemiesSt[en].id;
+			}
+		}
+		// プレイヤを確認できない
+		else {
+			// ランダムムーブ
+
+			// 理想
+			// 部屋->ランダムに次に向かう通路を決定
+			// 通路->過去の履歴から戻らないように移動
+
+			// 現実，とりあえず実装
+			// ８方向の中からランダム
+		}
 	}
+	// 死んでいるとき
 	else {
-		// 死んでいるとき
 		if (s->enemiesSt[en].killedEnemyTurn > 0) {
 			s->enemiesSt[en].killedEnemyTurn--;
 		}
 		else {
 			// 敵を復活
+			int count = 0;
+			for (int y = 0; y < MAPSIZEY; y++) {
+				for (int x = 0; x < MAPSIZEX; x++) {
+					if (s->map[y][x] == 0 && (s->x != x || s->y != y) && s->enemies[y][x] == -1) {
+						count++;
+					}
+				}
+			}
+
+			Rule_setEachEnemy(s, &(count), en);
 		}
 	}
 	
 	// 行動したとき -> enemymapの更新
 	Rule_updateEnemyMap(s);
+}
+
+int Rule_hasPlayerPosition(State *s, int en) {
+	// 敵の位置からプレイヤが見えるか
+	
+	return TRUE;
+}
+
+int Rule_canAttackPlayer(State *s, int en) {
+	// 周囲８マスにいて，攻撃が通る（斜め攻撃判定）
+	if (Rule_isCollidedPlayer(s, s->enemiesSt[en].id) == TRUE) {
+		return TRUE;
+	}
+	else {
+		return FALSE;
+	}
 }
 
 void Rule_updateEnemyMap(State *s) {
@@ -528,9 +639,7 @@ void Rule_updateEnemyMap(State *s) {
 	// その他：-1
 	for (int en = 0; en < ENEMY_NUMBER; en++) {
 		if (s->enemiesSt[en].active == TRUE) {
-			int x = s->enemiesSt[en].x;
-			int y = s->enemiesSt[en].y;
-			s->enemies[y][x] = en;
+			s->enemies[s->enemiesSt[en].y][s->enemiesSt[en].x] = s->enemiesSt[en].id;
 		}
 	}
 }
@@ -577,9 +686,12 @@ int Rule_convertActtoDir(int act) {
 }
 
 void Rule_copyState(State* cs, State* ns) {
-	ns->gameTurn = cs->gameTurn;
 	ns->gameFlag = cs->gameFlag;
-	ns->flr = cs->flr;
+	ns->gameTurn = cs->gameTurn;
+
+	ns->flrNum = cs->flrNum;
+	ns->flrTurn = cs->flrTurn;
+	ns->flrResetFlag = cs->flrResetFlag;
 	ns->hp = cs->hp;
 	ns->mhp = cs->mhp;
 	ns->stm = cs->stm;
@@ -608,7 +720,7 @@ void Rule_copyState(State* cs, State* ns) {
 		ns->enemiesSt[en].x = cs->enemiesSt[en].x;
 		ns->enemiesSt[en].y = cs->enemiesSt[en].y;
 		ns->enemiesSt[en].point = cs->enemiesSt[en].point;
-		ns->enemiesSt[en].killedEnemyTurn = ns->enemiesSt[en].killedEnemyTurn;
+		ns->enemiesSt[en].killedEnemyTurn = cs->enemiesSt[en].killedEnemyTurn;
 		
 		ns->enemiesSt[en].testEnemy = cs->enemiesSt[en].testEnemy;
 	}

@@ -26,10 +26,14 @@ typedef struct {
 	// 公開
 	int gameFlag;
 	int gameTurn;
-	int flr;
+	int flrResetFlag;
+	int flrNum;
+	int flrTurn;
+	
+	int x, y;
 	int hp, mhp, stm, lv, exp;
 	int pt, fd, ar, st, itemNumber;
-	int x, y;
+	
 	// 一部非公開
 	int **map;
 	int **seem;
