@@ -299,6 +299,7 @@ void Rule_initPlayer(State *s) {
 	s->stm = PLAYER_STM;
 	s->lv = 0;
 	s->exp = 0;
+	s->autoHealVal = 0.0;
 
 	s->pt = 0;
 	s->fd = 0;
@@ -340,6 +341,15 @@ void Rule_transitState(State *s, int act) {
 			Rule_updateEnemyMap(s);
 			// プレイヤから見えている範囲を更新
 			Rule_updateSeemArea(s);
+
+			// ターン経過による自動回復
+			s->autoHealVal += (s->hp * PLAYER_AUTOHEALCOEF);
+			if (s->autoHealVal >= 1.0) {
+				if (s->hp < PLAYER_MAXHP) {
+					s->hp += 1;
+				}
+				s->autoHealVal -= 1.0;
+			}
 
 			(s->gameTurn)++;
 			if (s->hp == 0) {
@@ -729,6 +739,7 @@ void Rule_copyState(State* s1, State* s2) {
 	s2->hp = s1->hp;
 	s2->mhp = s1->mhp;
 	s2->stm = s1->stm;
+	s2->autoHealVal = s1->autoHealVal;
 	s2->lv = s1->lv;
 	s2->exp = s1->exp;
 	s2->lvupExp = s1->lvupExp;

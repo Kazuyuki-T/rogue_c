@@ -34,6 +34,7 @@ typedef struct {
 	int hp, mhp, stm, lv, exp;
 	int pt, fd, ar, st, itemNumber;
 	int lvupExp, lvupExpSum;
+	double autoHealVal;
 
 	// 一部非公開
 	int **map;
