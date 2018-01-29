@@ -29,6 +29,7 @@ static const int dirNum[3][3] = { {6, 7, 8}, {3, 4, 5}, {0 ,1, 2} };
 
 State currentState;
 State nextState;
+State currentStateHidden;
 
 
 // そもそも，すべての引数にState必要ある？
@@ -99,9 +100,13 @@ State* Rule_init(unsigned int seed) {
 	// 配列の動的確保
 	Rule_makeArrays(&currentState);
 	Rule_makeArrays(&nextState);
+	Rule_makeArrays(&currentStateHidden);
 
 	// 初期盤面の作成
 	Rule_setStateInfo(&currentState, TRUE);
+
+	// プレイヤ用
+	Rule_copyState(&currentState, &currentStateHidden);
 
 	return &currentState;
 }
@@ -109,6 +114,7 @@ State* Rule_init(unsigned int seed) {
 void Rule_destroy(void) {
 	Rule_removeArrays(&currentState);
 	Rule_removeArrays(&nextState);
+	Rule_removeArrays(&currentStateHidden);
 }
 
 void Rule_makeArrays(State* s) {
@@ -310,6 +316,10 @@ void Rule_initPlayer(State *s) {
 	s->lvupExpSum = s->lvupExp;
 }
 
+State* Rule_getCurrentStateHidden(void) {
+	return &currentStateHidden;
+}
+
 State* Rule_getNextState(State* s, int act) {
 	// 状態 + 行動 -> 新しい状態
 	
@@ -317,6 +327,9 @@ State* Rule_getNextState(State* s, int act) {
 	Rule_copyState(s, &nextState);
 	// Stateの更新
 	Rule_transitState(&nextState, act);
+
+	// プレイヤ用
+	Rule_copyState(&nextState, &currentStateHidden);
 
 	return &nextState;
 }

@@ -45,7 +45,10 @@ int GameManager_run(void) {
 	//State* cState = Rule_init((unsigned int)time(NULL));
 	State* cState = Rule_init(0);
 	State* nState; // 次状態のStateポインタを用意
-	//State* hState; // 一部の情報が隠されたState
+	State* cStateHidden; // 一部の情報が隠されたState
+
+	// cStateの状態をコピー済み
+	cStateHidden = Rule_getCurrentStateHidden();
 
 	// テスト出力用
 	GameManager_outputMap(cState, 0);
@@ -59,9 +62,8 @@ int GameManager_run(void) {
 	while (TRUE) {
 		// Stateそのままでなく，クローンを扱う必要あり
 		// cStateの情報を一部隠したplayer用のState
-		//hState = Rule_copyState(cState);
-
-		int act = Player_decideAction(cState);
+		int act = Player_decideAction(cStateHidden);
+		// 下の関数内でcStateHiddenへのコピーを行っている
 		nState = Rule_getNextState(cState, act);
 		cState = nState; // ポインタ付け替え
 		

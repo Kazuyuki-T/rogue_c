@@ -14,6 +14,9 @@ void Rule_destroy(void);
 // 状態+行動->新しい状態
 State* Rule_getNextState(State* s, int act);
 
+// プレイヤ用
+State* Rule_getCurrentStateHidden(void);
+
 // GMでの情報出力に必要，今後の修正により消去？
 int Rule_getMapSizeX(void);
 int Rule_getMapSizeY(void);
