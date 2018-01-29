@@ -6,43 +6,39 @@
 
 
 // 定数
-#define MAPSIZEX 20
-#define MAPSIZEY 20
-#define ENEMY_NUMBER 4
-#define ENEMY_REVTURN 50
-#define ENEMY_MAXHP 50
-#define ENEMY_POINT 100
-#define TOPFLR 4
-#define PLAYER_MAXHP 100
-#define PLAYER_STM 100
-
-// actionPlayerからの戻り値
-#define SUCCESS 1
-#define FAILURE 0
-#define NEXTFLR 2
+static const int MAPSIZEX = 20;
+static const int MAPSIZEY = 20;
+static const int ENEMY_NUMBER = 4;
+static const int ENEMY_REVTURN = 50;
+static const int ENEMY_MAXHP = 50;
+static const int ENEMY_POINT = 500;
+static const int TOPFLR = 4;
+static const int PLAYER_MAXHP = 100;
+static const int PLAYER_STM = 100;
+static const double PLAYER_AUTOHEALCOEF = 0.005; // -> 1/200
+static const int PLAYER_INITLVUPEXP = 100; // 初期のレベルアップ必要経験値
+static const double PLAYER_LVUPCOEF = 1.1; // レベルアップ必要経験値の係数
 
 // 周囲8方向から求めるxy差分
-const int diffX[9] = { -1, 0, 1,-1, 0, 1,-1, 0, 1 };
-const int diffY[9] = {  1, 1, 1, 0, 0, 0,-1,-1,-1 };
+static const int diffX[9] = { -1, 0, 1,-1, 0, 1,-1, 0, 1 };
+static const int diffY[9] = {  1, 1, 1, 0, 0, 0,-1,-1,-1 };
 // xy差分から求める周囲8方向
+// 自身はdirNum[1][1]=4の位置
 // 使用時には差分 -1~1 -> 0~2 に変換
-const int dirNum[3][3] = { {6, 7, 8}, {3, 4, 5}, {0 ,1, 2} };
+static const int dirNum[3][3] = { {6, 7, 8}, {3, 4, 5}, {0 ,1, 2} };
 
 State currentState;
 State nextState;
 
-typedef struct {
-	int testRule;
 
-	// private
-	int mapSizeX;
-	// private
-	int mapSizeY;
-	// private
-	int enemyNumber;
-	// private
-	int topFlr;
-} Rule;
+// そもそも，すべての引数にState必要ある？
+// どうせこっちにStateの大本持ってるんだからいらなくない？
+// どっちがわかりやすいか？
+// 引数に用いたほうがわかりやすいか
+// Ruleに持たせず，GM側でState本体を持てば？
+// Ruleで初期化
+
+
 
 // 配列の動的確保
 void Rule_makeArrays(State* s);
@@ -69,7 +65,7 @@ int Rule_canActPlayer(State *s, int act);
 // 敵との衝突判定
 int Rule_getOrDefaultCollidedEnemyIndex(State *s, int nx, int ny);
 // プレイヤの攻撃
-void Rule_atkPlayer(State *s, int en, int atkDamage);
+void Rule_calcDamageFromPlayer(State *s, int en, int atkDamage);
 // 敵の行動
 void Rule_actEnemies(State *s);
 void Rule_actEachEnemy(State *s, int en);
@@ -85,6 +81,7 @@ void Rule_copyState(State* cs, State* ns);
 int Rule_getRandom(int min, int max);
 
 
+
 int Rule_hasPlayerPosition(State *s, int en);
 int Rule_canAttackPlayer(State *s, int en);
 
@@ -92,19 +89,16 @@ int Rule_canMoveUnit(State *s, int nx, int ny);
 
 int Rule_convRangeM1to1(int);
 
+void Rule_levelupIfNeeded(State* s);
 
 
 
-State* Rule_init(void) {
-	srand((unsigned int)time(NULL));
-	//srand(0);
+State* Rule_init(unsigned int seed) {
+	srand(seed);
 
+	// 配列の動的確保
 	Rule_makeArrays(&currentState);
 	Rule_makeArrays(&nextState);
-
-	// obj配置できる床の数
-	// この部分は連結リストで用意し，必要に応じて追加・削除したほうが良いか？
-	// 最大数（マップのサイズ）が判明しているため，カーソルによる線形リストでも良いかもしれない
 
 	// 初期盤面の作成
 	Rule_setStateInfo(&currentState, TRUE);
@@ -310,6 +304,9 @@ void Rule_initPlayer(State *s) {
 	s->fd = 0;
 	s->ar = 0;
 	s->st = 0;
+
+	s->lvupExp = PLAYER_INITLVUPEXP;
+	s->lvupExpSum = s->lvupExp;
 }
 
 State* Rule_getNextState(State* s, int act) {
@@ -345,7 +342,12 @@ void Rule_transitState(State *s, int act) {
 			Rule_updateSeemArea(s);
 
 			(s->gameTurn)++;
-			s->gameFlag = GAME_PLAYING;
+			if (s->hp == 0) {
+				s->gameFlag = GAME_OVER;
+			}
+			else {
+				s->gameFlag = GAME_PLAYING;
+			}
 		}
 		else{
 			// プレイヤが行動しないとき
@@ -433,7 +435,7 @@ int Rule_canActPlayer(State *s, int act) {
 		int nextEnemyIndex = Rule_getOrDefaultCollidedEnemyIndex(s, nx, ny);
 		if (nextEnemyIndex != -1) {
 			// 斜め攻撃判定 -> return
-			Rule_atkPlayer(s, nextEnemyIndex, 10);
+			Rule_calcDamageFromPlayer(s, nextEnemyIndex, 10);
 			printf("                                                 \r");
 			printf("atk.");
 			/*for (int en = 0; en < thisRule->enemyNumber; en++) {
@@ -475,7 +477,7 @@ int Rule_canMoveUnit(State *s, int nx, int ny) {
 int Rule_getOrDefaultCollidedEnemyIndex(State *s, int nx, int ny) {
 	for (int en = 0; en < ENEMY_NUMBER; en++) {
 		if (s->enemiesSt[en].x == nx && s->enemiesSt[en].y == ny && s->enemiesSt[en].active == TRUE) {
-			return s->enemiesSt[en].id;
+			return en;
 		}
 	}
 	return -1;
@@ -492,7 +494,7 @@ int Rule_isCollidedPlayer(State *s, int en) {
 	return FALSE;
 }
 
-void Rule_atkPlayer(State *s, int en, int atkDamage) {
+void Rule_calcDamageFromPlayer(State *s, int en, int atkDamage) {
 	if (s->enemiesSt[en].hp - atkDamage <= 0) {
 		// 敵の死亡処理
 		s->enemiesSt[en].hp = 0;
@@ -503,7 +505,10 @@ void Rule_atkPlayer(State *s, int en, int atkDamage) {
 
 		// プレイヤに経験値を追加
 		s->exp += s->enemiesSt[en].point;
-		//(s->exp) += 100;
+		
+		// レベルアップ判定
+		Rule_levelupIfNeeded(s);
+
 		printf("%d\n", s->enemiesSt[en].point);
 	}
 	else {
@@ -511,10 +516,28 @@ void Rule_atkPlayer(State *s, int en, int atkDamage) {
 	}
 }
 
+void Rule_levelupIfNeeded(State* s) {
+	while (TRUE)
+	{
+		if (s->exp >= s->lvupExpSum) {
+			s->lv++;
+			s->lvupExp = (int)(s->lvupExp * PLAYER_LVUPCOEF);
+			s->lvupExpSum += s->lvupExp;
+		}
+		else {
+			break;
+		}
+	}
+}
+
 void Rule_actEnemies(State *s) {
 	// 順番に行動
 	for (int en = 0; en < ENEMY_NUMBER; en++) {
 		Rule_actEachEnemy(s, en);
+		// 敵の行動中にプレイヤが死んだとき
+		if (s->hp == 0) {
+			break;
+		}
 	}
 }
 
@@ -529,6 +552,16 @@ int Rule_convRangeM1to1(int dn) {
 	return dn;
 }
 
+void Rule_calcDamageFromEnemy(State *s, int en, int atkDamage) {
+	if (s->hp - atkDamage <= 0) {
+		// プレイヤの死亡処理
+		s->hp = 0;
+	}
+	else {
+		s->hp -= atkDamage;
+	}
+}
+
 void Rule_actEachEnemy(State *s, int en) {
 	// 行動の選択
 
@@ -538,7 +571,7 @@ void Rule_actEachEnemy(State *s, int en) {
 		if (Rule_hasPlayerPosition(s, en) == TRUE) {
 			// 攻撃できる
 			if (Rule_canAttackPlayer(s, en) == TRUE) {
-
+				Rule_calcDamageFromEnemy(s, en, 1);
 			}
 			// 攻撃できない->最短距離で移動
 			else {
@@ -569,6 +602,7 @@ void Rule_actEachEnemy(State *s, int en) {
 					s->enemiesSt[en].y = ny;
 				}
 				else {
+					// 左右２方向確認
 
 				}
 
@@ -620,7 +654,7 @@ int Rule_hasPlayerPosition(State *s, int en) {
 
 int Rule_canAttackPlayer(State *s, int en) {
 	// 周囲８マスにいて，攻撃が通る（斜め攻撃判定）
-	if (Rule_isCollidedPlayer(s, s->enemiesSt[en].id) == TRUE) {
+	if (Rule_isCollidedPlayer(s, en) == TRUE) {
 		return TRUE;
 	}
 	else {
@@ -685,44 +719,46 @@ int Rule_convertActtoDir(int act) {
 	}
 }
 
-void Rule_copyState(State* cs, State* ns) {
-	ns->gameFlag = cs->gameFlag;
-	ns->gameTurn = cs->gameTurn;
+void Rule_copyState(State* s1, State* s2) {
+	s2->gameFlag = s1->gameFlag;
+	s2->gameTurn = s1->gameTurn;
 
-	ns->flrNum = cs->flrNum;
-	ns->flrTurn = cs->flrTurn;
-	ns->flrResetFlag = cs->flrResetFlag;
-	ns->hp = cs->hp;
-	ns->mhp = cs->mhp;
-	ns->stm = cs->stm;
-	ns->lv = cs->lv;
-	ns->exp = cs->exp;
-	ns->pt = cs->pt;
-	ns->fd = cs->fd;
-	ns->ar = cs->ar;
-	ns->st = cs->st;
-	ns->itemNumber = cs->itemNumber;
-	ns->x = cs->x;
-	ns->y = cs->y;
-	ns->testState = cs->testState;
+	s2->flrNum = s1->flrNum;
+	s2->flrTurn = s1->flrTurn;
+	s2->flrResetFlag = s1->flrResetFlag;
+	s2->hp = s1->hp;
+	s2->mhp = s1->mhp;
+	s2->stm = s1->stm;
+	s2->lv = s1->lv;
+	s2->exp = s1->exp;
+	s2->lvupExp = s1->lvupExp;
+	s2->lvupExpSum = s1->lvupExpSum;
+	s2->pt = s1->pt;
+	s2->fd = s1->fd;
+	s2->ar = s1->ar;
+	s2->st = s1->st;
+	s2->itemNumber = s1->itemNumber;
+	s2->x = s1->x;
+	s2->y = s1->y;
+	s2->testState = s1->testState;
 	for (int y = 0; y < MAPSIZEY; y++) {
 		for (int x = 0; x < MAPSIZEY; x++) {
-			ns->map[y][x] = cs->map[y][x];
-			ns->seem[y][x] = cs->seem[y][x];
-			ns->enemies[y][x] = cs->enemies[y][x];
+			s2->map[y][x] = s1->map[y][x];
+			s2->seem[y][x] = s1->seem[y][x];
+			s2->enemies[y][x] = s1->enemies[y][x];
 		}
 	}
 	for (int en = 0; en < ENEMY_NUMBER; en++) {
-		ns->enemiesSt[en].hp = cs->enemiesSt[en].hp;
-		ns->enemiesSt[en].mhp = cs->enemiesSt[en].mhp;
-		ns->enemiesSt[en].id = cs->enemiesSt[en].id;
-		ns->enemiesSt[en].active = cs->enemiesSt[en].active;
-		ns->enemiesSt[en].x = cs->enemiesSt[en].x;
-		ns->enemiesSt[en].y = cs->enemiesSt[en].y;
-		ns->enemiesSt[en].point = cs->enemiesSt[en].point;
-		ns->enemiesSt[en].killedEnemyTurn = cs->enemiesSt[en].killedEnemyTurn;
+		s2->enemiesSt[en].hp = s1->enemiesSt[en].hp;
+		s2->enemiesSt[en].mhp = s1->enemiesSt[en].mhp;
+		s2->enemiesSt[en].id = s1->enemiesSt[en].id;
+		s2->enemiesSt[en].active = s1->enemiesSt[en].active;
+		s2->enemiesSt[en].x = s1->enemiesSt[en].x;
+		s2->enemiesSt[en].y = s1->enemiesSt[en].y;
+		s2->enemiesSt[en].point = s1->enemiesSt[en].point;
+		s2->enemiesSt[en].killedEnemyTurn = s1->enemiesSt[en].killedEnemyTurn;
 		
-		ns->enemiesSt[en].testEnemy = cs->enemiesSt[en].testEnemy;
+		s2->enemiesSt[en].testEnemy = s1->enemiesSt[en].testEnemy;
 	}
 }
 

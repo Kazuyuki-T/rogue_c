@@ -28,7 +28,6 @@ int main(void)
 		printf("GAME OVER...\n");
 	}
 	else {
-		// result == GAME_OVER での終了
 		// 途中終了：escとか
 		printf("途中終了\n");
 	}
@@ -42,8 +41,11 @@ int GameManager_run(void) {
 	#endif // DEBUG
 
 	// 現在・次状態を表すStateの
-	State* cState = Rule_init(); // 現在のStateの初期化
-	State* nState; // 次のStateを用意，配列確保等
+	// 現在のStateの初期化（動的確保を含む）
+	//State* cState = Rule_init((unsigned int)time(NULL));
+	State* cState = Rule_init(0);
+	State* nState; // 次状態のStateポインタを用意
+	//State* hState; // 一部の情報が隠されたState
 
 	// テスト出力用
 	GameManager_outputMap(cState, 0);
@@ -55,6 +57,10 @@ int GameManager_run(void) {
 	// main loop //
 	///////////////
 	while (TRUE) {
+		// Stateそのままでなく，クローンを扱う必要あり
+		// cStateの情報を一部隠したplayer用のState
+		//hState = Rule_copyState(cState);
+
 		int act = Player_decideAction(cState);
 		nState = Rule_getNextState(cState, act);
 		cState = nState; // ポインタ付け替え
@@ -80,7 +86,7 @@ int GameManager_run(void) {
 	#endif // DEBUG
 
 	int result = cState->gameFlag;
-	Rule_destroy();
+	Rule_destroy(); // 動的確保配列の解放
 	return result;
 }
 
@@ -139,6 +145,7 @@ void GameManager_outputPlayerInfo(State* s) {
 	printf("stm:%d, ", s->stm);
 	printf("lv:%d, ", s->lv);
 	printf("exp:%d, ", s->exp);
+	printf("lvupexpsum:%d, ", s->lvupExpSum);
 	printf("\n");
 	
 	printf("pt:%d, ", s->pt);

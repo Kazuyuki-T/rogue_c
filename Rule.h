@@ -5,8 +5,8 @@
 #include <stdio.h>
 #include "State.h"
 
-// 初期化関数
-State* Rule_init(void);
+// 初期化関数，引数seed，戻り値ポインタ
+State* Rule_init(unsigned int seed);
 
 // 終了関数，動的確保配列の解放
 void Rule_destroy(void);
