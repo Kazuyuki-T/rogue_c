@@ -12,13 +12,21 @@ static const int GAME_PLAYING = 0;
 typedef struct {
 	int testEnemy;
 
-	int id;
+	int id; // map更新時使用
 	int active;
 	int hp, mhp;
 	int x, y;
 	int point;
 	int killedEnemyTurn;
 } Enemy;
+
+typedef struct {
+	int id; // map
+	int active;
+	int itemid;
+	int x;
+	int y;
+} Item;
 
 typedef struct {
 	int testState;
@@ -29,12 +37,14 @@ typedef struct {
 	int flrResetFlag;
 	int flrNum;
 	int flrTurn;
-	
 	int x, y;
 	int hp, mhp, stm, lv, exp;
-	int pt, fd, ar, st, itemNumber;
+	
 	int lvupExp, lvupExpSum;
 	double autoHealVal;
+
+	int pt, fd, ar, st, itemNumber;
+
 
 	// 一部非公開
 	int **map;

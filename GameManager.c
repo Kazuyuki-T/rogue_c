@@ -19,7 +19,7 @@ void GameManager_outputEnemiesInfo(State* s);
 
 int main(void)
 {
-	int result = GameManager_run(); // 実行
+	int result = GameManager_run(); // 1試行の実行
 
 	if (result == GAME_CLEAR) {
 		printf("GAME CLEAR!!\n");
