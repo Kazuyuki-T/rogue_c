@@ -21,6 +21,7 @@ State* Rule_getCurrentStateHidden(void);
 int Rule_getMapSizeX(void);
 int Rule_getMapSizeY(void);
 int Rule_getEnemyNum(void);
+int Rule_getInvSize(void);
 
 
 #endif

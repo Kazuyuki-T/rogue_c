@@ -6,9 +6,11 @@
 
 
 // 定数
-static const int MAPSIZEX = 20;
-static const int MAPSIZEY = 20;
-static const int ENEMY_NUMBER = 4;
+#define MAPSIZEX 20
+#define MAPSIZEY 20
+//static const int MAPSIZEX = 20;
+//static const int MAPSIZEY = 20;
+static const int ENEMY_NUMBER = 2;
 static const int ENEMY_REVTURN = 50;
 static const int ENEMY_MAXHP = 50;
 static const int ENEMY_POINT = 500;
@@ -18,6 +20,9 @@ static const int PLAYER_STM = 100;
 static const double PLAYER_AUTOHEALCOEF = 0.005; // -> 1/200
 static const int PLAYER_INITLVUPEXP = 100; // 初期のレベルアップ必要経験値
 static const double PLAYER_LVUPCOEF = 1.1; // レベルアップ必要経験値の係数
+static const int PLAYER_INVENTORYSIZE = 10;
+static const int ITEM_NUMBER = 4;
+static const int PLAYER_STM_DICREASE_TURN = 10; // 10T1STM
 
 // 周囲8方向から求めるxy差分
 static const int diffX[9] = { -1, 0, 1,-1, 0, 1,-1, 0, 1 };
@@ -38,6 +43,64 @@ State currentStateHidden;
 // 引数に用いたほうがわかりやすいか
 // Ruleに持たせず，GM側でState本体を持てば？
 // Ruleで初期化
+
+
+typedef struct {
+	int id;
+	int type; // 0:food, 1;staff, 2:arrow
+	char name[256];
+	char icon;
+	int maxUsageCount;
+	int healHPval;
+	int healSTval;
+	int damHPval;
+	int damSTval;
+	int effect; // 0:nothing, 1:warp
+} ItemList;
+
+const ItemList itemList[4] = {
+	{0, 0, "potion", 'p', 1, 10, 0, 0, 0, 0},
+	{1, 0, "food",	 'f', 1, 0, 10, 0, 0, 0},
+	{2, 1, "staff",	 's', 1, 0, 0, 0, 0, 0},
+	{3, 2, "arrow",  'a', 3, 0, 0, 10, 0, 0}
+};
+
+//typedef struct {
+//	int map[MAPSIZEY][MAPSIZEX];
+//	int pathNum;
+//	int path[][2];
+//	int roomNum; // 部屋数
+//	int room[][2];
+//} MapType;
+//
+//const MapType m1 = { 
+//	{{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+//  	 { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+//	 { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+//	 { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+//	 { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+//	 { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+//	 { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+//	 { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+//	 { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+//	 { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+//	 { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+//	 { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+//	 { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+//	 { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+//	 { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+//	 { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+//	 { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+//	 { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+//	 { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+//	 { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }},
+//	2,
+//	{ { 1, 324 }, { 2, 325 } },
+//	2,
+//	{ { 1, 324 },{ 2, 325 } }
+//};
+
+
 
 
 
@@ -92,6 +155,20 @@ int Rule_convRangeM1to1(int);
 
 void Rule_levelupIfNeeded(State* s);
 
+void Rule_setEachItem(State *s, int* gridnum, int in);
+
+void Rule_reserveInventoryArray(Inventory **invStArray, int invLength);
+void Rule_freeInventoryArray(Inventory **invStArray);
+
+int Rule_canAddInvItem(Inventory *inv, int id);
+int Rule_getInvItemNum(Inventory *inv);
+
+int Rule_getOrDefaultInvArrayIndex(Inventory *inv, int id);
+
+void Rule_decreaseInvItemUsageCount(Inventory *inv, int itemIndex);
+
+void Rule_doItemEffect(State *s, int en, int effectIndex);
+
 
 
 State* Rule_init(unsigned int seed) {
@@ -122,7 +199,9 @@ void Rule_makeArrays(State* s) {
 	Rule_reserveMapArray(&(s->map), MAPSIZEX, MAPSIZEY, -1);
 	Rule_reserveMapArray(&(s->seem), MAPSIZEX, MAPSIZEY, -1);
 	Rule_reserveMapArray(&(s->enemies), MAPSIZEX, MAPSIZEY, -1);
+	Rule_reserveMapArray(&(s->items), MAPSIZEX, MAPSIZEY, -1);
 	Rule_reserveEnemyArray(&(s->enemiesSt), ENEMY_NUMBER);
+	Rule_reserveInventoryArray(&(s->inv), PLAYER_INVENTORYSIZE);
 }
 
 void Rule_reserveMapArray(int ***mapArray, int lengthX, int lengthY, int initVal) {
@@ -153,12 +232,25 @@ void Rule_reserveEnemyArray(Enemy **enemyStArray, int enemyLength) {
 	}
 }
 
+void Rule_reserveInventoryArray(Inventory **invStArray, int invLength) {
+	*invStArray = (Inventory*)malloc(sizeof(Inventory) * invLength);
+	if (*invStArray == NULL) exit(1);
+
+	// 情報の初期化
+	for (int i = 0; i < invLength; i++) {
+		(*invStArray)[i].itemID = -1;
+		(*invStArray)[i].usageCount = -1;
+	}
+}
+
 void Rule_removeArrays(State* s) {
 	// 動的確保した配列の解放
 	Rule_freeMapArray(&(s->map), MAPSIZEY);
 	Rule_freeMapArray(&(s->seem), MAPSIZEY);
 	Rule_freeMapArray(&(s->enemies), MAPSIZEY);
+	Rule_freeMapArray(&(s->items), MAPSIZEY);
 	Rule_freeEnemyArray(&(s->enemiesSt));
+	Rule_freeInventoryArray(&(s->inv));
 }
 
 void Rule_freeMapArray(int ***mapArray, int lengthY) {
@@ -172,6 +264,10 @@ void Rule_freeEnemyArray(Enemy **enemyStArray) {
 	free(*enemyStArray);
 }
 
+void Rule_freeInventoryArray(Inventory **invStArray) {
+	free(*invStArray);
+}
+
 void Rule_setStateInfo(State *s, int playerInitFalg) {
 	// obj配置できる床の数
 	// この部分は連結リストで用意し，必要に応じて追加・削除したほうが良いか？
@@ -181,8 +277,6 @@ void Rule_setStateInfo(State *s, int playerInitFalg) {
 	int roomGridNum = Rule_setMap(s);
 	// 階段
 	Rule_setStair(s, &roomGridNum);
-	// アイテム
-	Rule_setItems(s, &roomGridNum);
 	// プレイヤ
 	Rule_setPlayer(s, &roomGridNum);
 	// プレイヤの初期化を行うか否か
@@ -193,6 +287,8 @@ void Rule_setStateInfo(State *s, int playerInitFalg) {
 	}
 	// 敵
 	Rule_setEnemies(s, &roomGridNum);
+	// アイテム
+	Rule_setItems(s, &roomGridNum);
 
 	// map上の敵の座標を更新
 	Rule_updateEnemyMap(s);
@@ -243,7 +339,31 @@ void Rule_setStair(State *s, int* gridnum) {
 }
 
 void Rule_setItems(State *s, int* gridnum) {
+	// 順番に生成
+	for (int in = 0; in < ITEM_NUMBER; in++) {
+		Rule_setEachItem(s, gridnum, in);
+	}
+}
 
+void Rule_setEachItem(State *s, int* gridnum, int in) {
+	int randItem = Rule_getRandom(0, 3);
+	
+	int itemPos = Rule_getRandom(0, (*gridnum) - 1);
+	(*gridnum)--;
+	int count = 0;
+	for (int y = 0; y < MAPSIZEY; y++) {
+		for (int x = 0; x < MAPSIZEX; x++) {
+			// 
+			if (s->map[y][x] == 0 && (s->x != x || s->y != y) && s->enemies[y][x] == -1) {
+				if (count == itemPos) {
+					// アイテムセット
+					s->items[y][x] = randItem;
+					return;
+				}
+				count++;
+			}
+		}
+	}
 }
 
 void Rule_setEnemies(State *s, int* gridnum) {
@@ -306,11 +426,7 @@ void Rule_initPlayer(State *s) {
 	s->lv = 0;
 	s->exp = 0;
 	s->autoHealVal = 0.0;
-
-	s->pt = 0;
-	s->fd = 0;
-	s->ar = 0;
-	s->st = 0;
+	s->stmDicTurnCount = PLAYER_STM_DICREASE_TURN;
 
 	s->lvupExp = PLAYER_INITLVUPEXP;
 	s->lvupExpSum = s->lvupExp;
@@ -355,18 +471,41 @@ void Rule_transitState(State *s, int act) {
 			// プレイヤから見えている範囲を更新
 			Rule_updateSeemArea(s);
 
-			// ターン経過による自動回復
-			s->autoHealVal += (s->hp * PLAYER_AUTOHEALCOEF);
-			if (s->autoHealVal >= 1.0) {
-				if (s->hp < PLAYER_MAXHP) {
-					s->hp += 1;
-				}
-				s->autoHealVal -= 1.0;
-			}
+			(s->gameTurn)++; // ターン経過処理
 
-			(s->gameTurn)++;
+			// 敵の攻撃で死んだとき，スタミナ・自動回復処理をスキップ
 			if (s->hp == 0) {
 				s->gameFlag = GAME_OVER;
+				return;
+			}
+
+			// stmの減少
+			if (s->stm > 0) {
+				s->stmDicTurnCount--;
+				if (s->stmDicTurnCount == 0) {
+					s->stm--;
+					s->stmDicTurnCount = PLAYER_STM_DICREASE_TURN;
+				}
+
+				// ターン経過による自動回復
+				s->autoHealVal += (s->hp * PLAYER_AUTOHEALCOEF);
+				if (s->autoHealVal >= 1.0) {
+					if (s->hp < PLAYER_MAXHP) {
+						s->hp += 1;
+					}
+					s->autoHealVal -= 1.0;
+				}
+			}
+			else {
+				// stm0によるhp減少
+				if (s->hp > 0) {
+					s->hp--;
+				}
+			}
+
+			if (s->hp == 0) {
+				s->gameFlag = GAME_OVER;
+				return;
 			}
 			else {
 				s->gameFlag = GAME_PLAYING;
@@ -400,38 +539,163 @@ int Rule_canActPlayer(State *s, int act) {
 	// 1~9 or f:Food or p:Potion -> 直接行動
 	// ↑↓←→ -> 直接行動
 
-	// 矢or杖
-	if (act == 'a' || act == 's') {
-		printf("                                                 \r");
-		printf("direction : "); // 方向の入力待ち
+	printf("%d, %d\n", m1.room[0][0], m1.room[0][1]);
+	printf("%d, %d\n", m1.room[1][0], m1.room[1][1]);
 
-		int actItem = _getch();
-		if (actItem == 0 || actItem == 224)	actItem = _getch();
-		int dir = Rule_convertActtoDir(actItem);
-		// -1のとき：0-8の方向に当てはまらない
-		if (dir != -1) {
+	_getch();
+
+	// 矢
+	if (act == 'a') {
+		// インベントリに存在するか否か
+		int invIndex = Rule_getOrDefaultInvArrayIndex(s->inv, 3);
+		if (invIndex != -1) {
 			printf("                                                 \r");
-			if (act == 'a') {
+			printf("direction : "); // 方向の入力待ち
+
+			int actItem = _getch();
+			if (actItem == 0 || actItem == 224)	actItem = _getch();
+			int dir = Rule_convertActtoDir(actItem);
+			// -1のとき：0-8の方向に当てはまらない
+			if (dir != -1) {
+				printf("                                                 \r");
 				printf("use arrrow %d", dir);
+
+				// 敵がいるときダメージ処理
+				int targetEnemyIndex = -1;
+				int nx, ny;
+				for (int distance = 1; distance <= 4; distance++) {
+					nx = diffX[dir] * distance + s->x;
+					ny = diffY[dir] * distance + s->y;
+					// (nx,ny)が壁に衝突したとき
+					if (s->map[ny][nx] == 1)	break;
+					targetEnemyIndex = Rule_getOrDefaultCollidedEnemyIndex(s, nx, ny);
+					// 敵に衝突したとき
+					if (targetEnemyIndex != -1)	break;
+				}
+				if (targetEnemyIndex != -1) {
+					// ダメージ処理
+					Rule_calcDamageFromPlayer(s, targetEnemyIndex, itemList[3].damHPval);
+					// effect処理（追加効果）
+					if (itemList[3].effect != 0) {
+						Rule_doItemEffect(s, targetEnemyIndex, itemList[3].effect);
+					}
+				}
+
+				// 使用したインデックスのアイテム使用回数を減少
+				Rule_decreaseInvItemUsageCount(s->inv, invIndex);
 			}
-			else if (act == 's') {
-				printf("use staff %d", dir);
+			else {
+				printf("                                                 \r");
+				printf("miss, ");
+				return FALSE;
 			}
 		}
 		else {
 			printf("                                                 \r");
-			printf("miss, ");
+			printf("No Item-arrow, ");
 			return FALSE;
 		}
 	}
-	// 食料 or ポーション
-	else if (act == 'f' || act == 'p') {
-		printf("                                                 \r");
-		if (act == 'f') {
-			printf("use food");
+	// 杖
+	else if (act == 's') {
+		// インベントリに存在するか否か
+		int invIndex = Rule_getOrDefaultInvArrayIndex(s->inv, 2);
+
+		if (invIndex != -1) {
+			printf("                                                 \r");
+			printf("direction : "); // 方向の入力待ち
+
+			int actItem = _getch();
+			if (actItem == 0 || actItem == 224)	actItem = _getch();
+			int dir = Rule_convertActtoDir(actItem);
+			// -1のとき：0-8の方向に当てはまらない
+			if (dir != -1) {
+				printf("                                                 \r");
+				printf("use staff %d", dir);
+
+				// 敵がいるとき，ダメージ処理
+				// 敵がいるときダメージ処理
+				int targetEnemyIndex = -1;
+				int nx, ny;
+				for (int distance = 1; distance <= 4; distance++) {
+					nx = diffX[dir] * distance + s->x;
+					ny = diffY[dir] * distance + s->y;
+					// (nx,ny)が壁に衝突したとき
+					if (s->map[ny][nx] == 1)	break;
+					targetEnemyIndex = Rule_getOrDefaultCollidedEnemyIndex(s, nx, ny);
+					// 敵に衝突したとき
+					if (targetEnemyIndex != -1)	break;
+				}
+				if (targetEnemyIndex != -1) {
+					// ダメージ処理
+					Rule_calcDamageFromPlayer(s, targetEnemyIndex, itemList[2].damHPval);
+					// effect処理（追加効果）
+					if (itemList[3].effect != 0) {
+						Rule_doItemEffect(s, targetEnemyIndex, itemList[2].effect);
+					}
+				}
+
+				// 使用したインデックスのアイテム使用回数を減少
+				Rule_decreaseInvItemUsageCount(s->inv, invIndex);
+			}
+			else {
+				printf("                                                 \r");
+				printf("miss, ");
+				return FALSE;
+			}
 		}
-		else if (act == 'p') {
+		else {
+			printf("                                                 \r");
+			printf("No Item-staff, ");
+			return FALSE;
+		}
+	}
+	// 食料
+	else if (act == 'f') {
+		// インベントリに存在するか否か
+		int invIndex = Rule_getOrDefaultInvArrayIndex(s->inv, 1);
+
+		if (invIndex != -1) {
+			printf("                                                 \r");
+			printf("use food");
+
+			s->hp += itemList[1].healHPval;
+			if (s->hp > PLAYER_MAXHP) {
+				s->hp = PLAYER_MAXHP;
+			}
+			s->stm += itemList[1].healSTval;
+			if (s->stm > PLAYER_STM) {
+				s->stm = PLAYER_STM;
+			}
+
+			// 使用したインデックスのアイテム使用回数を減少
+			Rule_decreaseInvItemUsageCount(s->inv, invIndex);
+		}
+		else {
+			printf("                                                 \r");
+			printf("No Item-food, ");
+			return FALSE;
+		}
+	}
+	//  ポーション
+	else if (act == 'p') {
+		// インベントリに存在するか否か
+		int invIndex = Rule_getOrDefaultInvArrayIndex(s->inv, 0);
+
+		if (invIndex != -1) {
+			printf("                                                 \r");
 			printf("use potion");
+
+			s->hp += itemList[0].healHPval;
+			s->stm += itemList[0].healSTval;
+
+			// 使用したインデックスのアイテム使用回数を減少
+			Rule_decreaseInvItemUsageCount(s->inv, invIndex);
+		}
+		else {
+			printf("                                                 \r");
+			printf("No Item-potion, ");
+			return FALSE;
 		}
 	}
 	// 階段降りるアクション，いらない？
@@ -458,6 +722,8 @@ int Rule_canActPlayer(State *s, int act) {
 		int nextEnemyIndex = Rule_getOrDefaultCollidedEnemyIndex(s, nx, ny);
 		if (nextEnemyIndex != -1) {
 			// 斜め攻撃判定 -> return
+
+
 			Rule_calcDamageFromPlayer(s, nextEnemyIndex, 10);
 			printf("                                                 \r");
 			printf("atk.");
@@ -469,6 +735,15 @@ int Rule_canActPlayer(State *s, int act) {
 			s->x += diffX[dir];
 			s->y += diffY[dir];
 
+			// 移動後の座標にアイテムがある場合
+			if (s->items[s->y][s->x] != -1) {
+				// アイテム追加
+				// インベントリに余裕があるとき
+				if (Rule_canAddInvItem(s->inv, s->items[s->y][s->x]) == TRUE) {
+					s->items[s->y][s->x] = -1;
+				}
+			}
+
 			// 移動後の座標が階段だった場合
 			if (s->map[s->y][s->x] == 2) {
 				s->flrResetFlag = TRUE;
@@ -477,6 +752,61 @@ int Rule_canActPlayer(State *s, int act) {
 	}
 
 	return TRUE;
+}
+
+void Rule_doItemEffect(State *s, int en, int effectIndex) {
+	if (effectIndex == 1) {
+		// warp処理
+
+	}
+	else {
+		// その他の処理
+	}
+}
+
+int Rule_getOrDefaultInvArrayIndex(Inventory *inv, int id) {
+	for (int i = 0; i < PLAYER_INVENTORYSIZE; i++) {
+		if (inv[i].itemID == id) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+int Rule_canAddInvItem(Inventory *inv, int id) {
+	// 追加できるかできないか
+	int invnum = Rule_getInvItemNum(inv);
+	if (invnum < PLAYER_INVENTORYSIZE) {
+		inv[invnum].itemID = id;
+		inv[invnum].usageCount = itemList[id].maxUsageCount;
+		return TRUE;
+	}
+	else{
+		return FALSE;
+	}
+}
+
+void Rule_decreaseInvItemUsageCount(Inventory *inv, int itemIndex) {
+	// アイテム使用回数の減少
+	inv[itemIndex].usageCount--;
+	// 減少後0になったものは消去->配列の要素を詰める
+	if (inv[itemIndex].usageCount == 0) {
+		for (int i = itemIndex; i < PLAYER_INVENTORYSIZE - 1; i++) {
+			inv[i].itemID = inv[i + 1].itemID;
+			inv[i].usageCount = inv[i + 1].usageCount;
+		}
+		inv[PLAYER_INVENTORYSIZE - 1].itemID = -1;
+		inv[PLAYER_INVENTORYSIZE - 1].usageCount = -1;
+	}
+}
+
+int Rule_getInvItemNum(Inventory *inv) {
+	for (int i = 0; i < PLAYER_INVENTORYSIZE; i++) {
+		if (inv[i].itemID == -1) {
+			return i;
+		}
+	}
+	return PLAYER_INVENTORYSIZE;
 }
 
 int Rule_canMoveUnit(State *s, int nx, int ny) {
@@ -757,19 +1087,18 @@ void Rule_copyState(State* s1, State* s2) {
 	s2->exp = s1->exp;
 	s2->lvupExp = s1->lvupExp;
 	s2->lvupExpSum = s1->lvupExpSum;
-	s2->pt = s1->pt;
-	s2->fd = s1->fd;
-	s2->ar = s1->ar;
-	s2->st = s1->st;
-	s2->itemNumber = s1->itemNumber;
 	s2->x = s1->x;
 	s2->y = s1->y;
+
+	s2->stmDicTurnCount = s1->stmDicTurnCount;
+
 	s2->testState = s1->testState;
 	for (int y = 0; y < MAPSIZEY; y++) {
 		for (int x = 0; x < MAPSIZEY; x++) {
 			s2->map[y][x] = s1->map[y][x];
 			s2->seem[y][x] = s1->seem[y][x];
 			s2->enemies[y][x] = s1->enemies[y][x];
+			s2->items[y][x] = s1->items[y][x];
 		}
 	}
 	for (int en = 0; en < ENEMY_NUMBER; en++) {
@@ -783,6 +1112,10 @@ void Rule_copyState(State* s1, State* s2) {
 		s2->enemiesSt[en].killedEnemyTurn = s1->enemiesSt[en].killedEnemyTurn;
 		
 		s2->enemiesSt[en].testEnemy = s1->enemiesSt[en].testEnemy;
+	}
+	for (int in = 0; in < PLAYER_INVENTORYSIZE; in++) {
+		s2->inv[in].itemID = s1->inv[in].itemID;
+		s2->inv[in].usageCount = s1->inv[in].usageCount;
 	}
 }
 
@@ -801,5 +1134,9 @@ int Rule_getMapSizeY(void) {
 
 int Rule_getEnemyNum(void) {
 	return ENEMY_NUMBER;
+}
+
+int Rule_getInvSize(void) {
+	return PLAYER_INVENTORYSIZE;
 }
 

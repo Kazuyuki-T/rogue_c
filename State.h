@@ -21,12 +21,9 @@ typedef struct {
 } Enemy;
 
 typedef struct {
-	int id; // map
-	int active;
-	int itemid;
-	int x;
-	int y;
-} Item;
+	int itemID;
+	int usageCount;
+} Inventory;
 
 typedef struct {
 	int testState;
@@ -43,13 +40,15 @@ typedef struct {
 	int lvupExp, lvupExpSum;
 	double autoHealVal;
 
-	int pt, fd, ar, st, itemNumber;
+	int stmDicTurnCount;
 
+	Inventory *inv;
 
 	// 一部非公開
-	int **map;
-	int **seem;
-	int **enemies;
+	int **map; // 0:通行可，1;通行不可，2:階段
+	int **seem; // 0:みえない，1:，
+	int **enemies; // -1:なし，0~:id
+	int **items; // -1:なし，0~:id
 	Enemy* enemiesSt;
 } State;
 

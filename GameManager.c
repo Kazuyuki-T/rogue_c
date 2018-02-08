@@ -42,8 +42,8 @@ int GameManager_run(void) {
 
 	// 現在・次状態を表すStateの
 	// 現在のStateの初期化（動的確保を含む）
-	//State* cState = Rule_init((unsigned int)time(NULL));
-	State* cState = Rule_init(0);
+	State* cState = Rule_init((unsigned int)time(NULL));
+	//sState* cState = Rule_init(0);
 	State* nState; // 次状態のStateポインタを用意
 	State* cStateHidden; // 一部の情報が隠されたState
 
@@ -53,6 +53,7 @@ int GameManager_run(void) {
 	// テスト出力用
 	GameManager_outputMap(cState, 0);
 	GameManager_outputMap(cState, 1);
+	//GameManager_outputMap(cState, 2);
 	GameManager_outputPlayerInfo(cState);
 	GameManager_outputEnemiesInfo(cState);
 
@@ -69,6 +70,7 @@ int GameManager_run(void) {
 		
 		GameManager_outputMap(cState, 0);
 		GameManager_outputMap(cState, 1);
+		//GameManager_outputMap(cState, 2);
 		GameManager_outputPlayerInfo(cState);
 		GameManager_outputEnemiesInfo(cState);
 
@@ -103,16 +105,46 @@ void GameManager_outputMap(State* s, int n) {
 		for (int y = 0; y < my; y++) {
 			for (int x = 0; x < mx; x++) {
 				// 描画の優先度に注意
+				
+				//if (s->y == y && s->x == x) {
+				//	printf("@ ");
+				//}
+				//else if (s->enemies[y][x] != -1) {
+				//	printf("$ ");
+				//}
+				//else if (s->map[y][x] == 2) {
+				//	printf("%% "); // %%で%出力
+				//}
+				//else if (s->map[y][x] == 0) {
+				//	printf(". ");
+				//}
+				//else if (s->map[y][x] == 1) {
+				//	printf("# ");
+				//}
+				//else {
+				//	printf("_ ");
+				//}
+
 				if (s->y == y && s->x == x) {
 					printf("@ ");
+					continue;
 				}
 				else if (s->enemies[y][x] != -1) {
 					printf("$ ");
+					continue;
 				}
-				else if (s->map[y][x] == 2) {
+
+				if (s->items[y][x] != -1) {
+					printf("i ");
+					continue;
+				}
+
+				if (s->map[y][x] == 2) {
 					printf("%% "); // %%で%出力
+					continue;
 				}
-				else if (s->map[y][x] == 0) {
+
+				if (s->map[y][x] == 0) {
 					printf(". ");
 				}
 				else if (s->map[y][x] == 1) {
@@ -135,6 +167,15 @@ void GameManager_outputMap(State* s, int n) {
 		}
 		printf("\n");
 	}
+	else if (n == 2) {
+		for (int y = 0; y < my; y++) {
+			for (int x = 0; x < mx; x++) {
+				printf("%2d", s->items[y][x]);
+			}
+			printf("\n");
+		}
+		printf("\n");
+	}
 }
 
 void GameManager_outputPlayerInfo(State* s) {
@@ -149,11 +190,11 @@ void GameManager_outputPlayerInfo(State* s) {
 	printf("exp:%d, ", s->exp);
 	printf("lvupexpsum:%d, ", s->lvupExpSum);
 	printf("\n");
-	
-	printf("pt:%d, ", s->pt);
-	printf("fd:%d, ", s->fd);
-	printf("ar:%d, ", s->ar);
-	printf("st:%d, ", s->st);
+
+	for (int i = 0; i < Rule_getInvSize(); i++) {
+		if(i == Rule_getInvSize() / 2)	printf("\n");
+		printf("%d:[%d(%d)], ", i, s->inv[i].itemID, s->inv[i].usageCount);
+	}
 	printf("\n");
 }
 
