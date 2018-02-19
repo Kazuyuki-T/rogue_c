@@ -22,6 +22,7 @@ int Rule_getMapSizeX(void);
 int Rule_getMapSizeY(void);
 int Rule_getEnemyNum(void);
 int Rule_getInvSize(void);
+char Rule_getItemIcon(int itemID);
 
 
 #endif

@@ -42,11 +42,13 @@ typedef struct {
 
 	int stmDicTurnCount;
 
+	int view;
+
 	Inventory *inv;
 
 	// 一部非公開
-	int **map; // 0:通行可，1;通行不可，2:階段
-	int **seem; // 0:みえない，1:，
+	int **map; // 0:通行可，1;通行不可，2:階段，(-100:未探索，プレイヤに渡すときのみ)
+	int **seem; // 0:みえない，1:見た，2:現在みている
 	int **enemies; // -1:なし，0~:id
 	int **items; // -1:なし，0~:id
 	Enemy* enemiesSt;

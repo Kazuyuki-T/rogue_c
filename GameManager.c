@@ -1,4 +1,5 @@
 ﻿#include <stdio.h>
+#include <time.h>
 #include <stdlib.h>
 
 #include "Rule.h"
@@ -52,7 +53,7 @@ int GameManager_run(void) {
 
 	// テスト出力用
 	GameManager_outputMap(cState, 0);
-	GameManager_outputMap(cState, 1);
+	//GameManager_outputMap(cState, 1);
 	//GameManager_outputMap(cState, 2);
 	GameManager_outputPlayerInfo(cState);
 	GameManager_outputEnemiesInfo(cState);
@@ -66,10 +67,17 @@ int GameManager_run(void) {
 		int act = Player_decideAction(cStateHidden);
 		// 下の関数内でcStateHiddenへのコピーを行っている
 		nState = Rule_getNextState(cState, act);
+		
+		/*GameManager_outputMap(cState, 0);
+		_getch();
+
+		GameManager_outputMap(nState, 0);
+		_getch();*/
+		
 		cState = nState; // ポインタ付け替え
 		
 		GameManager_outputMap(cState, 0);
-		GameManager_outputMap(cState, 1);
+		//GameManager_outputMap(cState, 1);
 		//GameManager_outputMap(cState, 2);
 		GameManager_outputPlayerInfo(cState);
 		GameManager_outputEnemiesInfo(cState);
@@ -102,29 +110,16 @@ void GameManager_outputMap(State* s, int n) {
 		system("cls");
 		//gotoxy(1,1); // conio.hの関数，windows環境では使えない？
 		
+		printf("get item(food)\n");
+
 		for (int y = 0; y < my; y++) {
 			for (int x = 0; x < mx; x++) {
-				// 描画の優先度に注意
-				
-				//if (s->y == y && s->x == x) {
-				//	printf("@ ");
-				//}
-				//else if (s->enemies[y][x] != -1) {
-				//	printf("$ ");
-				//}
-				//else if (s->map[y][x] == 2) {
-				//	printf("%% "); // %%で%出力
-				//}
-				//else if (s->map[y][x] == 0) {
-				//	printf(". ");
-				//}
-				//else if (s->map[y][x] == 1) {
-				//	printf("# ");
-				//}
-				//else {
-				//	printf("_ ");
-				//}
+				if (s->seem[y][x] == 0) {
+					printf("_ ");
+					continue;
+				}
 
+				// 描画の優先度に注意
 				if (s->y == y && s->x == x) {
 					printf("@ ");
 					continue;
@@ -135,7 +130,7 @@ void GameManager_outputMap(State* s, int n) {
 				}
 
 				if (s->items[y][x] != -1) {
-					printf("i ");
+					printf("%c ", Rule_getItemIcon(s->items[y][x]));
 					continue;
 				}
 
@@ -179,21 +174,25 @@ void GameManager_outputMap(State* s, int n) {
 }
 
 void GameManager_outputPlayerInfo(State* s) {
-	printf("flrNum:%d, ", s->flrNum);
+	printf("%dF, ", s->flrNum+1);
 	printf("turn:%d, ", s->gameTurn);
-	printf("(%d, %d), ", s->x, s->y);
+	printf("(%d, %d)", s->x, s->y);
 	printf("\n");
 	
 	printf("Hp/maxHp:%d/%d, ", s->hp, s->mhp);
 	printf("stm:%d, ", s->stm);
 	printf("lv:%d, ", s->lv);
-	printf("exp:%d, ", s->exp);
-	printf("lvupexpsum:%d, ", s->lvupExpSum);
+	//printf("exp:%d, ", s->exp);
+	//printf("lvupexpsum:%d, ", s->lvupExpSum);
 	printf("\n");
 
 	for (int i = 0; i < Rule_getInvSize(); i++) {
-		if(i == Rule_getInvSize() / 2)	printf("\n");
-		printf("%d:[%d(%d)], ", i, s->inv[i].itemID, s->inv[i].usageCount);
+		if (i == Rule_getInvSize() / 2) {
+			printf("\n");
+		}
+		if (s->inv[i].itemID != -1) {
+			printf("%d:[%c(%d)], ", i, Rule_getItemIcon(s->inv[i].itemID), s->inv[i].usageCount);
+		}
 	}
 	printf("\n");
 }

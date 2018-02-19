@@ -6,6 +6,7 @@
 
 
 // 定数
+// #define, static const どっち？
 #define MAPSIZEX 20
 #define MAPSIZEY 20
 //static const int MAPSIZEX = 20;
@@ -21,8 +22,9 @@ static const double PLAYER_AUTOHEALCOEF = 0.005; // -> 1/200
 static const int PLAYER_INITLVUPEXP = 100; // 初期のレベルアップ必要経験値
 static const double PLAYER_LVUPCOEF = 1.1; // レベルアップ必要経験値の係数
 static const int PLAYER_INVENTORYSIZE = 10;
-static const int ITEM_NUMBER = 4;
+static const int ITEM_NUMBER = 10;
 static const int PLAYER_STM_DICREASE_TURN = 10; // 10T1STM
+static const int PLAYER_VIEW = 4;
 
 // 周囲8方向から求めるxy差分
 static const int diffX[9] = { -1, 0, 1,-1, 0, 1,-1, 0, 1 };
@@ -65,41 +67,123 @@ const ItemList itemList[4] = {
 	{3, 2, "arrow",  'a', 3, 0, 0, 10, 0, 0}
 };
 
-//typedef struct {
-//	int map[MAPSIZEY][MAPSIZEX];
-//	int pathNum;
-//	int path[][2];
-//	int roomNum; // 部屋数
-//	int room[][2];
-//} MapType;
-//
-//const MapType m1 = { 
-//	{{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-//  	 { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-//	 { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-//	 { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-//	 { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-//	 { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-//	 { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-//	 { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-//	 { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-//	 { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-//	 { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-//	 { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-//	 { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-//	 { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-//	 { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-//	 { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-//	 { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-//	 { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-//	 { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-//	 { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }},
-//	2,
-//	{ { 1, 324 }, { 2, 325 } },
-//	2,
-//	{ { 1, 324 },{ 2, 325 } }
+typedef struct {
+	int map[MAPSIZEY][MAPSIZEX];
+	int squareNum;
+	int roomNum;
+	int room[8][2]; // {leftTop, rightBottom} y*mapSizeX+x
+} MapType;
+
+MapType mt; 
+// 状態のセット等に用いる
+// copy!!
+
+//// maptypeその１
+//MapType m1 = { 
+//	{{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+//	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+//	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+//	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+//	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+//	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+//	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+//	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+//	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+//	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+//	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+//	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+//	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+//	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+//	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+//	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+//	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+//	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+//	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+//	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+//	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+//	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+//	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+//	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+//	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+//	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+//	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+//	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+//	{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+//	{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}},
+//	1,
+//	1,
+//	{ { 51,  1448} }
+//};
+//// maptypeその２
+//MapType m2 = {
+//	{{ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 },
+//	 { 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 },
+//	 { 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 },
+//	 { 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 },
+//	 { 1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1 },
+//	 { 1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1 },
+//	 { 1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1 },
+//	 { 1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1 },
+//	 { 1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1 },
+//	 { 1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1 },
+//	 { 1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1 },
+//	 { 1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1 },
+//	 { 1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1 },
+//	 { 1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1 },
+//	 { 1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1 },
+//	 { 1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1 },
+//	 { 1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1 },
+//	 { 1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1 },
+//	 { 1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1 },
+//	 { 1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1 },
+//	 { 1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1 },
+//	 { 1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1 },
+//	 { 1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1 },
+//	 { 1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1 },
+//	 { 1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1 },
+//	 { 1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1 },
+//	 { 1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1 },
+//	 { 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 },
+//	 { 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 },
+//	 { 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 } },
+//	8,
+//	4,
+//	{ { 210, 619 },{ 230, 639 },{ 910, 1319 },{ 930, 1339 },
+//	  { 270, 279 },{ 1270, 1279 },{ 661, 861 },{ 688, 888 } }
 //};
 
+// maptypeその３
+MapType m3 = {
+	{{ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 },
+	 { 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 },
+	 { 1,1,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,1,1 },
+	 { 1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1 },
+	 { 1,1,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,1,1 },
+	 { 1,1,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,1,1 },
+	 { 1,1,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,1,1 },
+	 { 1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1 },
+	 { 1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1 },
+	 { 1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1 },
+	 { 1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1 },
+	 { 1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1 },
+	 { 1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1 },
+	 { 1,1,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,1,1 },
+	 { 1,1,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,1,1 },
+	 { 1,1,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,1,1 },
+	 { 1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1 },
+	 { 1,1,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,1,1 }, 
+	 { 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 },
+	 { 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 } },
+	8,
+	4,
+	{ { 42, 126 },{ 53, 137 },{ 262, 346 },{ 273, 357 },
+	{ 67, 72 },{ 143, 243 },{ 156, 256 },{ 327, 332 } }
+};
+
+
+
+// 通路の数が変更あるときどうすんの？
+// 
 
 
 
@@ -114,7 +198,7 @@ void Rule_freeMapArray(int ***mapArray, int lengthY);
 void Rule_freeEnemyArray(Enemy **enemyStArray);
 // Stateの情報のセット，map，obj配置
 void Rule_setStateInfo(State *s, int initFlag);
-int Rule_setMap(State *s);
+void Rule_setMap(State *s);
 void Rule_setStair(State *s, int* gridnum);
 void Rule_setItems(State *s, int* gridnum);
 void Rule_setEnemies(State *s, int* gridnum);
@@ -170,6 +254,18 @@ void Rule_decreaseInvItemUsageCount(Inventory *inv, int itemIndex);
 void Rule_doItemEffect(State *s, int en, int effectIndex);
 
 
+int Rule_getPosRoom(State *s, int roomID);
+
+int Rule_convertOneDimValtoX(int oneDimVal);
+
+int Rule_convertOneDimValtoY(int oneDimVal);
+
+int Rule_convertXYtoOneDimVal(int x, int y);
+
+int Rule_getOrDefaultPlayerRoomID(State *s);
+
+
+
 
 State* Rule_init(unsigned int seed) {
 	srand(seed);
@@ -197,7 +293,7 @@ void Rule_destroy(void) {
 void Rule_makeArrays(State* s) {
 	// 配列の動的確保
 	Rule_reserveMapArray(&(s->map), MAPSIZEX, MAPSIZEY, -1);
-	Rule_reserveMapArray(&(s->seem), MAPSIZEX, MAPSIZEY, -1);
+	Rule_reserveMapArray(&(s->seem), MAPSIZEX, MAPSIZEY, 0);
 	Rule_reserveMapArray(&(s->enemies), MAPSIZEX, MAPSIZEY, -1);
 	Rule_reserveMapArray(&(s->items), MAPSIZEX, MAPSIZEY, -1);
 	Rule_reserveEnemyArray(&(s->enemiesSt), ENEMY_NUMBER);
@@ -273,12 +369,74 @@ void Rule_setStateInfo(State *s, int playerInitFalg) {
 	// この部分は連結リストで用意し，必要に応じて追加・削除したほうが良いか？
 	// 最大数（マップのサイズ）が判明しているため，カーソルによる線形リストでも良いかもしれない
 
+	
+
+	
+	// どのmapテンプレを用いるか
+
+	// ファイル読み込み
+	// 
+
+
+
+
+
+
+
+
+	//mt = m1;
+	//for (int sn = 0; sn < m1.squareNum; sn++) {
+	//	// 複数要素に対応してるの？
+	//	mt.room[sn][0] = m1.room[sn][0];
+	//	mt.room[sn][1] = m1.room[sn][1];
+	//}
+	mt = m3;
+	for (int sn = 0; sn < m3.squareNum; sn++) {
+		// 複数要素に対応してるの？
+		mt.room[sn][0] = m3.room[sn][0];
+		mt.room[sn][1] = m3.room[sn][1];
+	}
+	// 通路カットの有無
+
+	// もろもろ確認
+	for (int y = 0; y < MAPSIZEY; y++) {
+		for (int x = 0; x < MAPSIZEX; x++) {
+			printf("%d ", mt.map[y][x]);
+		}
+		printf("\n");
+	}
+	printf("\n");
+	printf("sNum:%d\n", mt.squareNum);
+	printf("rNum:%d\n", mt.roomNum);
+	for (int rn = 0; rn < mt.roomNum; rn++) {
+		printf("(%d, %d)\n", mt.room[rn][0], mt.room[rn][1]);
+	}
+	_getch();
+
+
+	int *randArray;
+	randArray = (int*)malloc(sizeof(int) * mt.roomNum);
+	for (int rn = 0; rn < mt.roomNum; rn++) {
+		randArray[rn] = rn;
+	}
+	//　番号シャッフル
+	
+
+	// 各mapの初期化
+	for (int y = 0; y < MAPSIZEY; y++) {
+		for (int x = 0; x < MAPSIZEX; x++) {
+			s->seem[y][x] = 0;
+			s->enemies[y][x] = -1;
+			s->items[y][x] = -1;
+		}
+	}
+
 	// マップの作製->obj配置できる床の数
-	int roomGridNum = Rule_setMap(s);
+	Rule_setMap(s);
 	// 階段
-	Rule_setStair(s, &roomGridNum);
+	Rule_setStair(s, randArray);
 	// プレイヤ
-	Rule_setPlayer(s, &roomGridNum);
+	Rule_setPlayer(s, randArray);
 	// プレイヤの初期化を行うか否か
 	// ゲームの初期化の際には行う
 	// フロアの変更の際には行わない
@@ -286,9 +444,9 @@ void Rule_setStateInfo(State *s, int playerInitFalg) {
 		Rule_initPlayer(s);
 	}
 	// 敵
-	Rule_setEnemies(s, &roomGridNum);
+	Rule_setEnemies(s, randArray);
 	// アイテム
-	Rule_setItems(s, &roomGridNum);
+	Rule_setItems(s, randArray);
 
 	// map上の敵の座標を更新
 	Rule_updateEnemyMap(s);
@@ -298,138 +456,168 @@ void Rule_setStateInfo(State *s, int playerInitFalg) {
 
 	// フラグを更新
 	s->flrResetFlag = FALSE;
+
+	free(randArray);
 }
 
-int Rule_setMap(State *s) {
-	int count = 0;
+void Rule_setMap(State *s) {
 	for (int y = 0; y < MAPSIZEY; y++) {
 		for (int x = 0; x < MAPSIZEX; x++) {
-			if (y == 0 || x == 0 || y == MAPSIZEY - 1 || x == MAPSIZEX - 1) {
-				s->map[y][x] = 1;
-			}
-			else {
-				s->map[y][x] = 0;
-				count++;
-			}
-			s->seem[y][x] = 1;
-		}
-	}
-
-	return count;
-}
-
-void Rule_setStair(State *s, int* gridnum) {
-	// 床の上に生成
-	int stairPos = Rule_getRandom(0, (*gridnum) - 1);
-	(*gridnum)--;
-	int count = 0;
-	for (int y = 0; y < MAPSIZEY; y++) {
-		for (int x = 0; x < MAPSIZEX; x++) {
-			// 
-			if (s->map[y][x] == 0) {
-				if (count == stairPos) {
-					// mapに階段を設置
-					s->map[y][x] = 2;
-					return;
-				}
-				count++;
-			}
+			s->map[y][x] = mt.map[y][x];
 		}
 	}
 }
 
-void Rule_setItems(State *s, int* gridnum) {
+void Rule_setStair(State *s, int *randArray) {
+	// 部屋番号のランダム選択
+	int roomID = Rule_getRandom(0, mt.roomNum - 1);
+	// 部屋の中の座標決定
+	int setPos = Rule_getPosRoom(s, roomID);
+	int setPosX = Rule_convertOneDimValtoX(setPos);
+	int setPosY = Rule_convertOneDimValtoY(setPos);
+	s->map[setPosY][setPosX] = 2;
+}
+
+int Rule_getPosRoom(State *s, int roomID) {
+	int leftTopX = Rule_convertOneDimValtoX(mt.room[roomID][0]);
+	int leftTopY = Rule_convertOneDimValtoY(mt.room[roomID][0]);
+	int rightBottomX = Rule_convertOneDimValtoX(mt.room[roomID][1]);
+	int rightBottomY = Rule_convertOneDimValtoY(mt.room[roomID][1]);
+
+	int count = 0;
+	for (int y = leftTopY; y < rightBottomY; y++) {
+		for (int x = leftTopX; x < rightBottomX; x++) {
+			// 配置可能なマスをカウント
+			// 通路隣接除く
+			if (s->map[y][x] == 0 && (s->x != x || s->y != y) && s->enemies[y][x] == -1) {
+				count++;
+			}
+		}
+	}
+	
+	// count数から座標を決定
+	int randNum = Rule_getRandom(0, count - 1);
+	count = 0;
+	int setPos = -1;
+	for (int y = leftTopY; y < rightBottomY; y++) {
+		for (int x = leftTopX; x < rightBottomX; x++) {
+			// 配置可能なとき
+			if (s->map[y][x] == 0 && (s->x != x || s->y != y) && s->enemies[y][x] == -1) {
+				count++;
+			}
+
+			// 配置場所の時
+			if (randNum == count) {
+				setPos = Rule_convertXYtoOneDimVal(x, y);
+				return setPos;
+			}
+		}
+	}
+
+	return setPos;
+}
+
+int Rule_convertOneDimValtoX(int oneDimVal) {
+	return oneDimVal % MAPSIZEX;
+}
+
+int Rule_convertOneDimValtoY(int oneDimVal) {
+	return oneDimVal / MAPSIZEX;
+}
+
+int Rule_convertXYtoOneDimVal(int x, int y) {
+	return y * MAPSIZEX + x;
+}
+
+void Rule_setItems(State *s, int *randArray) {
+	// アイテムマップの初期化
+	/*for (int y = 0; y < MAPSIZEY; y++) {
+		for (int x = 0; x < MAPSIZEX; x++) {
+			s->items[y][x] = -1;
+		}
+	}*/
+	
 	// 順番に生成
 	for (int in = 0; in < ITEM_NUMBER; in++) {
-		Rule_setEachItem(s, gridnum, in);
+		Rule_setEachItem(s, randArray, in);
 	}
 }
 
-void Rule_setEachItem(State *s, int* gridnum, int in) {
+void Rule_setEachItem(State *s, int *randArray, int in) {
+	// 部屋番号のランダム選択
+	int roomID = Rule_getRandom(0, mt.roomNum - 1);
+	// 部屋の中の座標決定
+	int setPos = Rule_getPosRoom(s, roomID);
+	int setPosX = Rule_convertOneDimValtoX(setPos);
+	int setPosY = Rule_convertOneDimValtoY(setPos);
+
+	// アイテムセット
 	int randItem = Rule_getRandom(0, 3);
-	
-	int itemPos = Rule_getRandom(0, (*gridnum) - 1);
-	(*gridnum)--;
-	int count = 0;
-	for (int y = 0; y < MAPSIZEY; y++) {
-		for (int x = 0; x < MAPSIZEX; x++) {
-			// 
-			if (s->map[y][x] == 0 && (s->x != x || s->y != y) && s->enemies[y][x] == -1) {
-				if (count == itemPos) {
-					// アイテムセット
-					s->items[y][x] = randItem;
-					return;
-				}
-				count++;
-			}
-		}
-	}
+	s->items[setPosY][setPosX] = randItem;
+	return;
 }
 
-void Rule_setEnemies(State *s, int* gridnum) {
+void Rule_setEnemies(State *s, int *randArray) {
+	// エネミーマップの初期化
+	/*for (int y = 0; y < MAPSIZEY; y++) {
+		for (int x = 0; x < MAPSIZEX; x++) {
+			s->enemies[y][x] = -1;
+		}
+	}*/
+	
 	// 順番に生成
 	for (int en = 0; en < ENEMY_NUMBER; en++) {
-		Rule_setEachEnemy(s, gridnum, en);
+		Rule_setEachEnemy(s, randArray, en);
 	}
 }
 
-void Rule_setEachEnemy(State *s, int* gridnum, int en) {
-	int enemyPos = Rule_getRandom(0, (*gridnum) - 1);
-	(*gridnum)--;
-	int count = 0;
-	for (int y = 0; y < MAPSIZEY; y++) {
-		for (int x = 0; x < MAPSIZEX; x++) {
-			// 
-			if (s->map[y][x] == 0 && (s->x != x || s->y != y) && s->enemies[y][x] == -1) {
-				if (count == enemyPos) {
-					// 敵の初期座標の格納
-					s->enemies[y][x] = s->enemiesSt[en].id;
-					s->enemiesSt[en].x = x;
-					s->enemiesSt[en].y = y;
-					s->enemiesSt[en].active = TRUE;
-					s->enemiesSt[en].mhp = ENEMY_MAXHP;
-					s->enemiesSt[en].hp = s->enemiesSt[en].mhp;
-					s->enemiesSt[en].point = ENEMY_POINT;
-					s->enemiesSt[en].killedEnemyTurn = 0;
-					return;
-				}
-				count++;
-			}
-		}
-	}
+void Rule_setEachEnemy(State *s, int *randArray, int en) {
+	// 部屋番号のランダム選択
+	int roomID = Rule_getRandom(0, mt.roomNum - 1);
+	// 部屋の中の座標決定
+	int setPos = Rule_getPosRoom(s, roomID);
+	int setPosX = Rule_convertOneDimValtoX(setPos);
+	int setPosY = Rule_convertOneDimValtoY(setPos);
+
+	// 敵の初期座標の格納
+	s->enemies[setPosY][setPosX] = s->enemiesSt[en].id;
+	s->enemiesSt[en].x = setPosX;
+	s->enemiesSt[en].y = setPosY;
+	s->enemiesSt[en].active = TRUE;
+	s->enemiesSt[en].mhp = ENEMY_MAXHP;
+	s->enemiesSt[en].hp = s->enemiesSt[en].mhp;
+	s->enemiesSt[en].point = ENEMY_POINT;
+	s->enemiesSt[en].killedEnemyTurn = 0;
+	return;
 }
 
-void Rule_setPlayer(State *s, int* gridnum) {
-	int playerPos = Rule_getRandom(0, (*gridnum) - 1);
-	(*gridnum)--;
-	int count = 0;
-	for (int y = 0; y < MAPSIZEY; y++) {
-		for (int x = 0; x < MAPSIZEX; x++) {
-			// 
-			if (s->map[y][x] == 0) {
-				if (count == playerPos) {
-					// プレイヤの初期座標の格納
-					s->x = x;
-					s->y = y;
-					return;
-				}
-				count++;
-			}
-		}
-	}
+void Rule_setPlayer(State *s, int *randArray) {
+	// 部屋番号のランダム選択
+	int roomID = Rule_getRandom(0, mt.roomNum - 1);
+	// 部屋の中の座標決定
+	int setPos = Rule_getPosRoom(s, roomID);
+	int setPosX = Rule_convertOneDimValtoX(setPos);
+	int setPosY = Rule_convertOneDimValtoY(setPos);
+
+	// プレイヤの初期座標の格納
+	s->x = setPosX;
+	s->y = setPosY;
+	return;
 }
 
 void Rule_initPlayer(State *s) {
 	s->mhp = PLAYER_MAXHP;
 	s->hp = s->mhp;
 	s->stm = PLAYER_STM;
-	s->lv = 0;
+	s->lv = 1;
 	s->exp = 0;
 	s->autoHealVal = 0.0;
 	s->stmDicTurnCount = PLAYER_STM_DICREASE_TURN;
 
 	s->lvupExp = PLAYER_INITLVUPEXP;
 	s->lvupExpSum = s->lvupExp;
+
+	s->view = PLAYER_VIEW;
 }
 
 State* Rule_getCurrentStateHidden(void) {
@@ -438,12 +626,22 @@ State* Rule_getCurrentStateHidden(void) {
 
 State* Rule_getNextState(State* s, int act) {
 	// 状態 + 行動 -> 新しい状態
-	
+
+	/*for (int y = 0; y < MAPSIZEY; y++) {
+		for (int x = 0; x < MAPSIZEX; x++) {
+			printf("%d ", nextState.map[y][x]);
+		}
+		printf("\n");
+	}
+	printf("\n");
+	_getch();*/
+
 	// Stateの複製
 	Rule_copyState(s, &nextState);
+
 	// Stateの更新
 	Rule_transitState(&nextState, act);
-
+	
 	// プレイヤ用
 	Rule_copyState(&nextState, &currentStateHidden);
 
@@ -519,7 +717,7 @@ void Rule_transitState(State *s, int act) {
 		// フロアの更新チェック
 		if (s->flrResetFlag == TRUE) {
 			// プレイヤの階層が変化したとき
-			s->flrNum++;
+			s->flrNum += 1;
 			if (s->flrNum == TOPFLR) {
 				// 最上階到達 -> ゲームクリア
 				s->gameFlag = GAME_CLEAR;
@@ -539,10 +737,10 @@ int Rule_canActPlayer(State *s, int act) {
 	// 1~9 or f:Food or p:Potion -> 直接行動
 	// ↑↓←→ -> 直接行動
 
-	printf("%d, %d\n", m1.room[0][0], m1.room[0][1]);
-	printf("%d, %d\n", m1.room[1][0], m1.room[1][1]);
+	//printf("%d, %d\n", m1.room[0][0], m1.room[0][1]);
+	//printf("%d, %d\n", m1.room[1][0], m1.room[1][1]);
 
-	_getch();
+	//_getch();
 
 	// 矢
 	if (act == 'a') {
@@ -1032,11 +1230,73 @@ void Rule_updateEnemyMap(State *s) {
 }
 
 void Rule_updateSeemArea(State *s) {
+	// 現在見えている部分(2)を見えた部分(1)に
 	for (int y = 0; y < MAPSIZEY; y++) {
+		for (int x = 0; x < MAPSIZEX; x++) {
+			if (s->seem[y][x] == 2) {
+				s->seem[y][x] = 1;
+			}
+		}
+	}
+	
+	int roomID = Rule_getOrDefaultPlayerRoomID(s);
+	// プレイヤが部屋にいるとき
+	if (roomID != -1) {
+		// 部屋の周囲+1マス分を視界内に
+		int leftTopX = Rule_convertOneDimValtoX(mt.room[roomID][0]);
+		int leftTopY = Rule_convertOneDimValtoY(mt.room[roomID][0]);
+		int rightBottomX = Rule_convertOneDimValtoX(mt.room[roomID][1]);
+		int rightBottomY = Rule_convertOneDimValtoY(mt.room[roomID][1]);
+
+		for (int y = leftTopY - 1; y <= rightBottomY + 1; y++) {
+			for (int x = leftTopX - 1; x <= rightBottomX + 1; x++) {
+				// 配列外でなければ
+				if (0 <= y && y < MAPSIZEY && 0 <= x && x < MAPSIZEX) {
+					s->seem[y][x] = 2;
+				}
+			}
+		}
+	}
+	// 部屋にいないとき
+	else {
+		// プレイヤの視界範囲内を更新
+		for (int y = s->y - s->view; y <= s->y + s->view; y++) {
+			for (int x = s->x - s->view; x <= s->x + s->view; x++) {
+				// 配列外でなければ
+				if (0 <= y && y < MAPSIZEY && 0 <= x && x < MAPSIZEX) {
+					s->seem[y][x] = 2;
+				}
+			}
+		}
+	}
+
+		
+
+
+
+
+
+	/*for (int y = 0; y < MAPSIZEY; y++) {
 		for (int x = 0; x < MAPSIZEX; x++) {
 			s->seem[y][x] = 1;
 		}
+	}*/
+}
+
+int Rule_getOrDefaultPlayerRoomID(State *s) {
+	int leftTopX, leftTopY;
+	int rightBottomX, rightBottomY;
+	for (int rn = 0; rn < mt.roomNum; rn++) {
+		leftTopX = Rule_convertOneDimValtoX(mt.room[rn][0]);
+		leftTopY = Rule_convertOneDimValtoY(mt.room[rn][0]);
+		rightBottomX = Rule_convertOneDimValtoX(mt.room[rn][1]);
+		rightBottomY = Rule_convertOneDimValtoY(mt.room[rn][1]);
+		// 部屋の範囲内の時
+		if (leftTopX <= s->x && s->x <= rightBottomX && leftTopY <= s->y && s->y <= rightBottomY) {
+			return rn;
+		}
 	}
+	return -1;
 }
 
 int Rule_convertActtoDir(int act) {
@@ -1092,9 +1352,11 @@ void Rule_copyState(State* s1, State* s2) {
 
 	s2->stmDicTurnCount = s1->stmDicTurnCount;
 
+	s2->view = s1->view;
+
 	s2->testState = s1->testState;
 	for (int y = 0; y < MAPSIZEY; y++) {
-		for (int x = 0; x < MAPSIZEY; x++) {
+		for (int x = 0; x < MAPSIZEX; x++) {
 			s2->map[y][x] = s1->map[y][x];
 			s2->seem[y][x] = s1->seem[y][x];
 			s2->enemies[y][x] = s1->enemies[y][x];
@@ -1138,5 +1400,9 @@ int Rule_getEnemyNum(void) {
 
 int Rule_getInvSize(void) {
 	return PLAYER_INVENTORYSIZE;
+}
+
+char Rule_getItemIcon(int itemID) {
+	return itemList[itemID].icon;
 }
 
