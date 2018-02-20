@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <conio.h>
+#include <string.h>
 #include "Rule.h"
 
 
@@ -377,6 +378,58 @@ void Rule_setStateInfo(State *s, int playerInitFalg) {
 	// ファイル読み込み
 	// 
 
+
+	char fileName[] = "C:/Users/Kazuyuki.T/Documents/GitHub/rogue_c/m1.txt";
+	FILE *fp;
+	errno_t error;
+
+	// ファイルオープン
+	error = fopen_s(&fp, fileName, "r");
+	if (error != 0) {
+		printf("file read error!! - %s\n", fileName);
+		exit(0);
+	}
+
+	int i = 0;
+	char str[256];
+	char delim[] = " -,."; // 複数指定可能
+	char* ctx; // おまじない
+	char* tok; // トークン
+	
+	// map
+	while (fscanf_s(fp, "%s", &str, 256) != EOF) {
+		// ,交じりの文字列strをint値へ変換
+		tok = strtok_s(str, delim, &ctx); // １回目は文字列指定
+		while (tok != NULL) {
+			// char -> int
+			//atoi(tok);
+			tok = strtok_s(NULL, delim, &ctx); // ２回目以降はNULL
+		}
+		if (++i >= MAPSIZEX) break;
+	}
+
+	// ブロック数，部屋数
+	if (fscanf_s(fp, "%s", &str, 256) != EOF) {
+		tok = strtok_s(str, delim, &ctx);
+		while (tok != NULL) {
+			//atoi(tok);
+			tok = strtok_s(NULL, delim, &ctx);
+		}
+	}
+
+	// 各ブロック座標，必要に応じて削除
+	// 上の値に基づき配列を確保
+	//malloc
+	while (fscanf_s(fp, "%s", &str, 256) != EOF) {
+		tok = strtok_s(str, delim, &ctx);
+		while (tok != NULL) {
+			//atoi(tok);
+			tok = strtok_s(NULL, delim, &ctx);
+		}
+	}
+
+	// ファイルクローズ
+	fclose(fp);
 
 
 
