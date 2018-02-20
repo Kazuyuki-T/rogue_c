@@ -496,7 +496,7 @@ int Rule_getPosRoom(State *s, int roomID) {
 	}
 	
 	// count数から座標を決定
-	int randNum = Rule_getRandom(0, count - 1);
+	int randNum = Rule_getRandom(1, count); // １マス目～
 	count = 0;
 	int setPos = -1;
 	for (int y = leftTopY; y < rightBottomY; y++) {
@@ -574,6 +574,9 @@ void Rule_setEnemies(State *s, int *randArray) {
 void Rule_setEachEnemy(State *s, int *randArray, int en) {
 	// 部屋番号のランダム選択
 	int roomID = Rule_getRandom(0, mt.roomNum - 1);
+
+	printf("enemy roomid:%d\n", roomID);
+
 	// 部屋の中の座標決定
 	int setPos = Rule_getPosRoom(s, roomID);
 	int setPosX = Rule_convertOneDimValtoX(setPos);

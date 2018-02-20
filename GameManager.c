@@ -124,7 +124,7 @@ void GameManager_outputMap(State* s, int n) {
 					printf("@ ");
 					continue;
 				}
-				else if (s->enemies[y][x] != -1) {
+				else if (s->enemies[y][x] != -1 && s->seem[y][x] == 2) {
 					printf("$ ");
 					continue;
 				}
