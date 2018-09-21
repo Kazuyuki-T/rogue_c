@@ -64,6 +64,12 @@ int GameManager_run(void) {
 	while (TRUE) {
 		// Stateそのままでなく，クローンを扱う必要あり
 		// cStateの情報を一部隠したplayer用のState
+
+
+		// stateファイル出力, player読み込み？
+		// 要検討
+
+
 		int act = Player_decideAction(cStateHidden);
 		// 下の関数内でcStateHiddenへのコピーを行っている
 		nState = Rule_getNextState(cState, act);
